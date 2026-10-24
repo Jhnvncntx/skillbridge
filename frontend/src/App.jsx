@@ -1,21 +1,24 @@
-import { useEffect, useState } from "react";
-import { api } from "./api";
-import Register from "./pages/Register";
-import Skills from "./pages/Skills";
+import { useCallback, useEffect, useState } from "react";
+import { api, getToken, setToken } from "./api";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Welcome from "./pages/Welcome";
+import Home from "./pages/Home";
 import Jobs from "./pages/Jobs";
+import Saved from "./pages/Saved";
 import Applications from "./pages/Applications";
-import PostJob from "./pages/PostJob";
+import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 
-const MODES = [["student", "Job Seeker"], ["employer", "Employer"], ["admin", "Admin"]];
-const TABS = [["jobs", "Recommended Jobs"], ["applications", "My Applications"], ["skills", "My Skills"]];
-
 export default function App() {
-  const [mode, setMode] = useState("student");
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("jobs");
+  const [screen, setScreen] = useState("login");           // login | signup | welcome | app | admin
+  const [nav, setNav] = useState({ page: "home", q: "", jobId: null });
+  const [booting, setBooting] = useState(!!getToken());
   const [waking, setWaking] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [toast, setToast] = useState(null);
+  const [search, setSearch] = useState("");
 
   // Free hosting sleeps when idle: show a friendly message while the server wakes up.
   useEffect(() => {
@@ -24,63 +27,74 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
-  // Restore the saved user. The server keeps data in memory, so the id may no longer exist.
+  // Restore a saved session.
   useEffect(() => {
-    const id = localStorage.getItem("sb_user");
-    if (!id) return setLoading(false);
-    api.getUser(id).then(setUser)
-      .catch(() => localStorage.removeItem("sb_user"))
-      .finally(() => setLoading(false));
+    if (!getToken()) return;
+    api.me().then((u) => { setUser(u); setScreen("app"); })
+      .catch(() => setToken(null))
+      .finally(() => setBooting(false));
   }, []);
 
-  const login = (u) => { localStorage.setItem("sb_user", u.id); setUser(u); setTab("jobs"); };
-  const logout = () => { localStorage.removeItem("sb_user"); setUser(null); };
+  // The server keeps sessions in memory, so a restart ends them: send the user back to login.
+  useEffect(() => {
+    const expired = () => { setToken(null); setUser(null); setScreen("login"); setNotice("Your session ended (the server may have restarted). Please log in again."); };
+    window.addEventListener("sb-unauthorized", expired);
+    return () => window.removeEventListener("sb-unauthorized", expired);
+  }, []);
+
+  const notify = useCallback((message, ok = true) => {
+    setToast({ message, ok });
+    setTimeout(() => setToast(null), 5000);
+  }, []);
+
+  const onAuth = (u, isNew) => { setUser(u); setNotice(""); setNav({ page: "home", q: "", jobId: null }); setScreen(isNew ? "welcome" : "app"); };
+  const go = (page, extra = {}) => { setNav({ page, q: "", jobId: null, ...extra }); window.scrollTo(0, 0); };
+  const logout = async () => { try { await api.logout(); } catch { /* ignore */ } setToken(null); setUser(null); setScreen("login"); };
+
+  const doSearch = (e) => { e.preventDefault(); go("jobs", { q: search.trim() }); };
+
+  let body;
+  if (booting) body = <p className="p-8 text-white">Loading…</p>;
+  else if (screen === "signup") body = <Signup onDone={onAuth} onBack={() => setScreen("login")} />;
+  else if (screen === "admin") body = <div className="mx-auto max-w-5xl px-4 py-6"><Admin onBack={() => setScreen("login")} /></div>;
+  else if (screen === "welcome" && user) body = <Welcome user={user} onContinue={() => setScreen("app")} />;
+  else if (screen === "app" && user) {
+    body = (
+      <>
+        <header className="bg-maroon-950/70 backdrop-blur">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
+            <button onClick={() => go("home")} className="text-xl font-extrabold text-gold">SKILLBRIDGE</button>
+            <form onSubmit={doSearch} className="flex min-w-[200px] flex-1">
+              <input className="w-full rounded-full border-2 border-black bg-white px-4 py-1.5" placeholder="ENTER KEYWORDS"
+                value={search} onChange={(e) => setSearch(e.target.value)} />
+            </form>
+            <button onClick={() => go("saved")} className="rounded bg-crimson px-3 py-1 text-sm font-bold text-white">SAVED JOBS</button>
+            <button onClick={() => go("applications")} className="rounded bg-crimson px-3 py-1 text-sm font-bold text-white">MY APPLICATIONS</button>
+            <button onClick={() => go("profile")} className="text-center text-xs text-white">
+              <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-white font-bold text-maroon-900">{user.fullName[0]}</span>MY PROFILE
+            </button>
+          </div>
+        </header>
+        <main className="mx-auto max-w-6xl px-4 py-6">
+          {nav.page === "home" && <Home user={user} go={go} notify={notify} />}
+          {nav.page === "jobs" && <Jobs q={nav.q} selectedId={nav.jobId} onSelect={(id) => setNav({ ...nav, jobId: id })} notify={notify} />}
+          {nav.page === "saved" && <Saved go={go} notify={notify} />}
+          {nav.page === "applications" && <Applications notify={notify} />}
+          {nav.page === "profile" && <Profile user={user} onSaved={setUser} onLogout={logout} notify={notify} />}
+        </main>
+      </>
+    );
+  } else body = <Login onDone={onAuth} onSignup={() => setScreen("signup")} onAdmin={() => setScreen("admin")} notice={notice} />;
 
   return (
     <div className="min-h-screen">
-      <header className="bg-indigo-700 text-white">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2 px-4 py-4">
-          <h1 className="text-xl font-bold">SkillBridge</h1>
-          <div className="flex gap-1 text-sm">
-            {MODES.map(([k, l]) => (
-              <button key={k} onClick={() => setMode(k)}
-                className={`rounded-full px-3 py-1 ${mode === k ? "bg-white text-indigo-700" : "text-indigo-100 hover:bg-indigo-600"}`}>{l}</button>
-            ))}
-          </div>
-          {mode === "student" && user && (
-            <div className="text-right text-sm">
-              <div className="font-semibold">{user.name}</div>
-              <div className="text-indigo-200">{user.programName}</div>
-              <button onClick={logout} className="text-xs underline">Switch user</button>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {waking && (
-        <div className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">
-          Waking up the server… this can take up to a minute on the first visit.
+      {waking && <div className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">Waking up the server… this can take up to a minute on the first visit.</div>}
+      {toast && (
+        <div className={`fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-xl px-5 py-3 text-sm font-semibold shadow-lg ${toast.ok ? "bg-emerald-600 text-white" : "bg-red-600 text-white"}`}>
+          {toast.message}
         </div>
       )}
-
-      <main className="mx-auto max-w-4xl px-4 py-6">
-        {mode === "employer" ? <PostJob /> : mode === "admin" ? <Admin /> :
-          loading ? <p>Loading…</p> : !user ? <Register onDone={login} /> : (
-            <>
-              <nav className="mb-6 flex flex-wrap gap-2">
-                {TABS.map(([key, label]) => (
-                  <button key={key} onClick={() => setTab(key)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium ${tab === key ? "bg-indigo-700 text-white" : "bg-white text-slate-700 shadow-sm"}`}>
-                    {label}
-                  </button>
-                ))}
-              </nav>
-              {tab === "skills" ? <Skills user={user} onSaved={setUser} />
-                : tab === "applications" ? <Applications user={user} />
-                : <Jobs user={user} />}
-            </>
-          )}
-      </main>
+      {body}
     </div>
   );
 }

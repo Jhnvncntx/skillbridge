@@ -1,0 +1,69 @@
+code,roles,skills
+ARCH,Architectural Draftsman; Architectural Designer; Junior Architect; BIM Modeler; 3D Visualizer; Project Coordinator,AutoCAD; Revit; SketchUp; Lumion
+CE,Civil Engineer; Site Engineer; Project Engineer; QA/QC Engineer; Quantity Surveyor; Cost Estimator,AutoCAD; Revit; Primavera P6; STAAD Pro
+CE-CEM,Planning Engineer; Project Engineer; Site Engineer; Quantity Surveyor; Cost Estimator; Construction Supervisor,Primavera P6; MS Project; Bill of Quantities; AutoCAD
+CE-SE,Structural Engineer; Structural Designer; Structural Draftsman; Rebar Detailer; Steel Detailer; Design Engineer,STAAD Pro; ETABS; Tekla Structures; AutoCAD
+EE,Electrical Engineer; Electrical Designer; Electrical Draftsman; Maintenance Engineer; Power Systems Engineer; Electrical Estimator,AutoCAD Electrical; ETAP; PLC Programming; DIALux
+ECE,Electronics Engineer; Test Engineer; Process Engineer; Equipment Engineer; Field Service Engineer; Embedded Systems Engineer,PCB Design; Altium Designer; Embedded C; Failure Analysis
+ME,Mechanical Engineer; Design Engineer; Maintenance Engineer; Plant Engineer; Project Engineer; Mechanical Draftsman,SolidWorks; AutoCAD; GD&T; Preventive Maintenance
+IE,Industrial Engineer; Process Improvement Engineer; Production Planner; Supply Chain Analyst; Quality Engineer; Operations Analyst,Lean Six Sigma; Time and Motion Study; Inventory Management; SAP
+BSN,Registered Nurse; Staff Nurse; ER Nurse; Occupational Health Nurse; Dialysis Nurse; Infection Control Nurse,BLS; ACLS; IV Therapy; Patient Care
+HM,Front Desk Agent; Guest Relations Officer; Reservations Agent; Food and Beverage Attendant; Housekeeping Supervisor; Events Coordinator,Customer Service; Opera PMS; Food and Beverage Service; Event Planning
+TM,Travel Consultant; Tour Coordinator; Tour Guide; Ticketing Agent; Airline Ground Staff; Tourism Officer,Amadeus; Sabre; Itinerary Planning; Customer Service
+COMM,Content Writer; Copywriter; Social Media Specialist; Public Relations Officer; Communications Officer; Customer Service Representative,Canva; SEO; Social Media Management; Content Marketing
+COMM-NM,Digital Content Creator; Social Media Manager; Video Editor; Graphic Designer; Digital Marketing Specialist; Community Manager,Adobe Premiere Pro; Adobe Photoshop; Adobe After Effects; Canva
+COMM-CPA,Production Assistant; Scriptwriter; Voice Over Artist; Event Host; Stage Manager; Video Editor,Public Speaking; Event Coordination; Adobe Premiere Pro; Creative Writing
+MIDW,Registered Midwife; Midwife; Rural Health Midwife; Birth Attendant; Clinic Midwife; Community Health Worker,Prenatal Care; Newborn Care; Family Planning; Basic Life Support
+TVTE-ANIM,TVL Teacher; Animation Instructor; 2D Animator; 3D Animator; Motion Graphics Artist; Storyboard Artist,Toon Boom Harmony; Blender; Adobe After Effects; Adobe Animate
+TVTE-AUTO,TVL Teacher; TESDA Trainer; Automotive Technician; Automotive Mechanic; Service Advisor; Service Technician,Automotive Servicing NC II; Engine Diagnostics; Preventive Maintenance; Vehicle Inspection
+TVTE-DRAFT,TVL Teacher; TESDA Trainer; Draftsman; CAD Operator; Architectural Draftsman; Mechanical Draftsman,AutoCAD; SketchUp; SolidWorks; Technical Drafting
+TVTE-ELEX,TVL Teacher; TESDA Trainer; Electronics Technician; Test Technician; Production Technician; Repair Technician,Consumer Electronics Servicing NC II; Soldering; Circuit Troubleshooting; Equipment Calibration
+TVTE-ELEC,TVL Teacher; TESDA Trainer; Electrician; Electrical Technician; Maintenance Technician; Electrical Installer,Electrical Installation and Maintenance NC II; Electrical Wiring; Circuit Troubleshooting; Blueprint Reading
+TVTE-MECH,TVL Teacher; TESDA Trainer; Mechanical Technician; Machinist; CNC Operator; Maintenance Technician,Machining NC II; CNC Machining; Blueprint Reading; Preventive Maintenance
+TVTE-CCT,TVL Teacher; TESDA Trainer; Construction Foreman; Site Supervisor; Draftsman; Estimator,Blueprint Reading; Construction Estimating; AutoCAD; Carpentry NC II
+TVTE-WFT,TVL Teacher; TESDA Trainer; Welder; Pipe Welder; Steel Fabricator; Welding Inspector,SMAW; TIG Welding; MIG Welding; Blueprint Reading
+TVTE-HVAC,TVL Teacher; TESDA Trainer; HVAC Technician; Refrigeration Technician; Aircon Technician; Chiller Technician,HVAC Maintenance; Refrigeration and Airconditioning Servicing; Preventive Maintenance; Ductwork Installation
+TVTE-FSM,TVL Teacher; TESDA Trainer; Cook; Food and Beverage Attendant; Restaurant Supervisor; Catering Staff,Cookery NC II; Food and Beverage Services NC II; HACCP; Menu Planning
+TVTE-GFD,TVL Teacher; TESDA Trainer; Fashion Designer; Pattern Maker; Garment Production Operator; Sewing Machine Operator,Dressmaking NC II; Tailoring NC II; Pattern Making; Garment Quality Control
+TVTE-HRS,TVL Teacher; TESDA Trainer; Food and Beverage Attendant; Housekeeping Attendant; Room Attendant; Restaurant Server,Food and Beverage Services NC II; Housekeeping NC II; Customer Service; Table Service
+CS,Software Developer; Junior Programmer; Web Developer; QA Tester; Data Analyst; Systems Analyst,Java; Python; SQL; Git
+CS-NDC,Network Administrator; Network Engineer; Network Technician; Systems Administrator; NOC Engineer; Technical Support Engineer,CCNA; Cisco; Network Security; Linux
+CS-SD,Software Engineer; Full Stack Developer; Java Developer; Front End Developer; Backend Developer; Mobile App Developer,JavaScript; React; Spring Boot; Git
+IT,IT Support Specialist; Help Desk Technician; Technical Support Representative; Desktop Support Technician; Systems Administrator; IT Officer,Troubleshooting; Windows Server; Active Directory; Microsoft 365
+IT-NWA,Web Developer; Front End Developer; PHP Developer; WordPress Developer; Network Technician; Network Administrator,PHP; Laravel; JavaScript; MySQL
+EMC-GD,Game Developer; Unity Developer; Gameplay Programmer; Game Designer; Game QA Tester; 3D Artist,Unity; Unreal Engine; C#; C++
+EMC-DAT,3D Animator; 2D Animator; Motion Graphics Artist; Character Animator; VFX Artist; Storyboard Artist,Maya; Blender; Adobe After Effects; Toon Boom Harmony
+BIT-AUTO,Automotive Technician; Auto Mechanic; Service Technician; Diesel Mechanic; Service Advisor; Automotive Electrician,Automotive Servicing NC II; Engine Diagnostics; Preventive Maintenance; Auto Electrical
+BIT-DRAFT,Draftsman; CAD Operator; Architectural Draftsman; Mechanical Draftsman; Electrical Draftsman; Piping Draftsman,AutoCAD; SketchUp; Revit; SolidWorks
+BIT-ELEX,Electronics Technician; Service Technician; Production Technician; Test Technician; Field Service Technician; CCTV Technician,Soldering; Circuit Troubleshooting; Equipment Calibration; Consumer Electronics Servicing NC II
+BIT-ELEC,Electrician; Electrical Technician; Maintenance Technician; Electrical Installer; Industrial Electrician; Lineman,Electrical Installation and Maintenance NC II; Electrical Wiring; PLC; Circuit Troubleshooting
+BIT-MECH,Mechanical Technician; Machinist; CNC Operator; Maintenance Technician; Production Technician; Machine Operator,CNC Machining; Lathe Operation; Blueprint Reading; Preventive Maintenance
+BIT-WFT,Welder; Pipe Welder; Steel Fabricator; Welding Inspector; Fitter; Structural Welder,SMAW; TIG Welding; MIG Welding; Blueprint Reading
+BIT-HVAC,HVAC Technician; Refrigeration Technician; Aircon Technician; Chiller Technician; Service Technician; Ducting Installer,HVAC Maintenance; Refrigeration and Airconditioning Servicing; Preventive Maintenance; Ductwork Installation
+BIT-FST,Cook; Commis Chef; Baker; Pastry Cook; Food Service Crew; Kitchen Staff,HACCP; Food Safety; Cookery NC II; Bread and Pastry Production NC II
+BIT-GFD,Fashion Designer; Pattern Maker; Sewing Machine Operator; Garment Merchandiser; Quality Inspector; Tailor,Pattern Making; Dressmaking NC II; Tailoring NC II; Garment Production
+EDD-EM,College Professor; Dean; Program Head; School Principal; Academic Director; Education Program Specialist,Curriculum Development; Educational Leadership; Instructional Supervision; Academic Research
+MAED-EM,School Administrator; Academic Coordinator; Curriculum Coordinator; Assistant Principal; Program Head; Registrar,Curriculum Development; School Management; Instructional Supervision; Educational Leadership
+MAED-GS,Science Teacher; Senior High School Science Teacher; College Instructor; STEM Teacher; Science Tutor; Curriculum Developer,Lesson Planning; STEM Education; Laboratory Management; Classroom Management
+MAED-GC,Guidance Counselor; School Counselor; Career Counselor; Student Affairs Officer; Guidance Coordinator; Student Services Coordinator,Counseling; Career Guidance; Case Management; Crisis Intervention
+MAED-FIL,Filipino Teacher; Senior High School Filipino Teacher; College Instructor; Filipino Translator; Proofreader; Content Writer,Translation; Proofreading; Copy Editing; Lesson Planning
+MAED-LE,English Teacher; ESL Teacher; Online English Tutor; Language Instructor; Communication Skills Trainer; Voice and Accent Trainer,TEFL; TESOL; Curriculum Development; Lesson Planning
+MAED-MATH,Mathematics Teacher; Senior High School Math Teacher; College Instructor; Online Math Tutor; Curriculum Developer; Data Analyst,Lesson Planning; Statistics; Microsoft Excel; Curriculum Development
+MAED-SS,Social Studies Teacher; Araling Panlipunan Teacher; History Teacher; College Instructor; Research Assistant; Curriculum Developer,Lesson Planning; Research; Curriculum Development; Classroom Management
+MAED-THE,TLE Teacher; TVL Teacher; Home Economics Teacher; TESDA Trainer; Culinary Instructor; Technical-Vocational Instructor,Cookery NC II; Dressmaking NC II; Food and Beverage Services NC II; Lesson Planning
+MBA,Business Analyst; Operations Manager; Project Manager; Marketing Manager; Business Development Manager; Account Manager,Strategic Planning; Financial Analysis; Project Management; Data Analysis
+MPA,Administrative Officer; Planning Officer; Policy Analyst; Project Development Officer; Program Officer; Public Affairs Officer,Public Policy; Program Management; Budgeting; Monitoring and Evaluation
+MEM,Engineering Manager; Project Manager; Operations Manager; Plant Manager; Production Manager; Maintenance Manager,Project Management; Lean Six Sigma; Supply Chain Management; Budgeting
+MAN,Nurse Manager; Head Nurse; Charge Nurse; Nursing Supervisor; Clinical Instructor; Nurse Educator,Nursing Administration; Quality Improvement; Infection Control; Clinical Teaching
+MPES,PE Teacher; MAPEH Teacher; Physical Education Instructor; Sports Coach; Fitness Instructor; Sports Program Coordinator,Coaching; Strength and Conditioning; Sports Management; Lesson Planning
+CPE,Software Developer; Embedded Systems Engineer; Network Engineer; Technical Support Engineer; QA Engineer; Hardware Technician,Java; Python; C++; CCNA
+DS,Data Analyst; Data Scientist; Business Intelligence Analyst; Data Engineer; Machine Learning Engineer; Reporting Analyst,Python; SQL; Power BI; Tableau
+HIM,Medical Records Officer; Medical Coder; Health Information Technician; Medical Transcriptionist; Claims Processor; PhilHealth Coordinator,ICD-10; Medical Coding; Electronic Medical Records; Medical Terminology
+PH-POP,Health Program Coordinator; Community Health Worker; Public Health Associate; Health Educator; Program Officer; Research Assistant,Epidemiology; Health Promotion; Monitoring and Evaluation; Community Health
+RADTECH,Radiologic Technologist; X-ray Technician; CT Scan Technologist; MRI Technologist; Radiology Technician; Medical Imaging Technologist,Radiography; PACS; Radiation Safety; Patient Positioning
+COMM-PC,Public Relations Officer; Communications Officer; Media Relations Officer; Public Information Officer; Speechwriter; Research Analyst,Public Relations; Media Relations; Strategic Communication; Press Release Writing
+CE-TE,Transportation Engineer; Traffic Engineer; Highway Engineer; Road Design Engineer; Transport Planner; Site Engineer,AutoCAD Civil 3D; Highway Design; Traffic Engineering; Transportation Planning
+BIT-AFT,Fashion Designer; Pattern Maker; Apparel Merchandiser; Production Supervisor; Sewing Machine Operator; Quality Inspector,Pattern Making; Garment Construction; Fashion Illustration; Garment Quality Control
+BIT-ADT,Architectural Draftsman; CAD Operator; Draftsman; Architectural Technician; 3D Modeler; BIM Modeler,AutoCAD; Revit; SketchUp; Architectural Drafting
+BIT-CUL,Cook; Commis Chef; Line Cook; Pastry Cook; Baker; Kitchen Supervisor,Cookery NC II; Bread and Pastry Production NC II; HACCP; Menu Planning
+BIT-GT,Sewing Machine Operator; Garment Production Operator; Pattern Maker; Quality Inspector; Cutter; Tailor,Garment Production; Pattern Making; Industrial Sewing; Dressmaking NC II

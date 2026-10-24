@@ -12,4 +12,14 @@ public class SearchUtil {
         }
         return -1;
     }
+
+    /** First index whose value is >= target (the insertion point). Used for prefix search on a sorted array. */
+    public static int lowerBound(String[] sorted, String target) {
+        int lo = 0, hi = sorted.length;
+        while (lo < hi) {
+            int mid = (lo + hi) / 2;
+            if (sorted[mid].compareTo(target) < 0) lo = mid + 1; else hi = mid;
+        }
+        return lo;
+    }
 }

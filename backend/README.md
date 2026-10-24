@@ -1,68 +1,77 @@
-# SkillBridge Backend (Spring Boot + custom data structures)
-
-## Requirements
-- JDK 17 or 21
-- Maven 3.9+ (or let VS Code / IntelliJ's Maven handle it)
+# SkillBridge Backend v2 (Java + Spring Boot, custom data structures)
 
 ## Run locally
-```
-cd backend
-mvn spring-boot:run
-```
-Server starts on http://localhost:8080. In VS Code you can also open
-`SkillBridgeApplication.java` and click **Run** above `main`.
+IntelliJ: open the `backend` folder, then run `SkillBridgeApplication` (green arrow).
+Terminal: `mvn spring-boot:run`. The server starts on http://localhost:8080.
+Check: http://localhost:8080/api/health  ->  {"status":"ok","programs":68,"jobs":16,"users":3}
 
-## Environment variables (all optional locally)
+## Demo accounts (password for all: Demo1234)
+| Email | Program | Target role |
+|---|---|---|
+| cpe@demo.skillbridge | Computer Engineering (CPE) | Embedded Systems Engineer |
+| cs@demo.skillbridge | CS - Software Development (CS-SD) | Backend Developer |
+| nurse@demo.skillbridge | Nursing (BSN) | Staff Nurse |
+Accounts live in memory and are re-created on every start. Disable them with env var SEED_DEMO=false.
+
+## Data files (src/main/resources/data)
+| File | What it is |
+|---|---|
+| programs.csv | The 68 programs/majors (code, group, program, major, level, status, note) |
+| program_keywords.csv | The leader's 6 job-role + 4 skill keywords per program (used for the target-role dropdown) |
+| jobs.csv | The job listings. **Currently 16 SAMPLE rows (example.com links).** Replace with the real data. |
+
+### Updating the real jobs
+1. In the Excel template (Jobs sheet): File > Download > CSV.
+2. Replace `src/main/resources/data/jobs.csv` with that file (keep the same name).
+3. Restart the server (or `git push` so Render redeploys).
+4. Open the admin report to see any rows that were skipped and why:
+   `curl -H "X-Admin-Passcode: admin123" localhost:8080/api/admin/stats`  ->  `dataReport.problems`
+   (Console output on startup also lists skipped rows.)
+Rows marked EXAMPLE and blank rows are ignored automatically.
+
+## Environment variables
 | Variable | Default | Purpose |
 |---|---|---|
-| `PORT` | 8080 | Port (Render sets this) |
-| `ADMIN_PASSCODE` | admin123 | Passcode for `/api/admin/stats` - CHANGE on Render |
-| `ALLOWED_ORIGIN` | http://localhost:5173 | Front-end URL(s) allowed by CORS, comma-separated |
+| PORT | 8080 | Port (Render sets it) |
+| ADMIN_PASSCODE | admin123 | Admin dashboard passcode. CHANGE on Render. |
+| ALLOWED_ORIGIN | http://localhost:5173 | Front-end URL(s) allowed by CORS, comma-separated |
+| SEED_DEMO | true | Create the demo accounts |
+| JOBS_CSV_PATH | (unset) | Read jobs from this file instead of the bundled jobs.csv |
 
-## Try it (browser or curl)
-```
-curl localhost:8080/api/health
-curl localhost:8080/api/programs
-curl localhost:8080/api/jobs
-curl "localhost:8080/api/users/1/recommendations?top=3"
-curl localhost:8080/api/users/2/ranked
-curl "localhost:8080/api/skills/check?name=python"
-curl localhost:8080/api/skills
+## API
+Log in first; send the token as `Authorization: Bearer <token>`.
 
-# register a student, tag skills, get matches
-curl -X POST localhost:8080/api/users -H "Content-Type: application/json" \
-     -d '{"name":"Test Student","program":"BSIT","gender":"FEMALE"}'
-curl -X PUT localhost:8080/api/users/7/skills -H "Content-Type: application/json" \
-     -d '{"skills":["html","css","javascript"]}'
-curl localhost:8080/api/users/7/recommendations
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /api/health | status and counts |
+| GET | /api/programs | flat program list (tree order) |
+| GET | /api/programs/tree | College > Program > Major tree |
+| GET | /api/programs/{code}/roles | suggested target roles |
+| GET | /api/programs/{code}/skills | suggested hard skills |
+| GET | /api/skills?prefix= | skill autocomplete |
+| POST | /api/auth/signup | create account (returns token + user) |
+| POST | /api/auth/login | log in (returns token + user) |
+| POST | /api/auth/logout | end the session |
+| GET / PUT | /api/me | view / edit profile |
+| GET | /api/me/home?top=6 | `recommended` + `alsoQualify` |
+| GET | /api/jobs?q= | all jobs ranked for me, or keyword search |
+| GET | /api/jobs/{id} | one job with score breakdown |
+| GET | /api/me/saved | saved jobs |
+| POST / DELETE | /api/me/saved/{jobId} | save / unsave |
+| POST | /api/me/applications | apply (body: jobId, note); response has the job `link` to open |
+| GET | /api/me/applications | my applications |
+| DELETE | /api/me/applications/last | undo last application |
+| GET | /api/admin/stats | header `X-Admin-Passcode`; per-program stats, coverage gaps, data report |
 
-# employer posts a job
-curl -X POST localhost:8080/api/jobs -H "Content-Type: application/json" \
-     -d '{"title":"Junior Web Dev","company":"Demo Co","targetPrograms":["BSIT","BSCS"],"requiredSkills":["html","css","react"]}'
+Errors: `{"error": "message"}` with 400 / 401 / 404 / 409.
 
-# apply, list, undo last (per user)
-curl -X POST localhost:8080/api/applications -H "Content-Type: application/json" \
-     -d '{"userId":7,"jobId":"J9","note":"Interested!"}'
-curl localhost:8080/api/users/7/applications
-curl -X DELETE localhost:8080/api/users/7/applications/last
+## Scoring (engine/ScoreCalculator.java)
+Role match 50 + hard skills 30 x (matched / required) + program match 20 = 100.
+The matching engine only receives a `MatchProfile` (program code, target role, hard skills).
+Gender, age, address and contact never reach it.
 
-# admin (needs header)
-curl -H "X-Admin-Passcode: admin123" localhost:8080/api/admin/stats
-```
-Seed data: 24 simulated jobs (all 21 programs covered) and 6 sample students (ids 1-6).
-Everything is in memory and resets on restart.
-
-Errors come back as `{"error": "message"}` with 400 / 401 / 404 / 409.
-
-## Package map
-- `datastructures/` MyLinkedList, MyStack, MyHashTable, MyGraph, MyMaxHeap, SortUtil, SearchUtil
-- `engine/`  MatchingEngine, ScoreCalculator (gender-blind), MatchResult, SkillDemand
-- `model/`   Program (21 programs), Gender, User, Job, Application
-- `service/` SkillBridgeService (all logic), SeedData, ApiException
-- `controller/` ApiController (REST), ApiExceptionHandler
-- `dto/`     request / response records
-- `config/`  CorsConfig
-
-## Deploy on Render (Docker)
-New > Web Service > connect repo > Root Directory `backend` > Runtime: Docker.
-Set env vars `ADMIN_PASSCODE` and `ALLOWED_ORIGIN`. Health check path: `/api/health`.
+## Where to read the data structures (suggested order)
+1. datastructures/MyLinkedList, MyStack, MyQueue (linear)
+2. MyHashTable (chaining + resize), SearchUtil, SortUtil (merge sort)
+3. MyMaxHeap, MyTree (preorder with a stack, level order with a queue), MyGraph (BFS with a queue)
+4. engine/MatchingEngine (how they are combined), engine/ScoreCalculator

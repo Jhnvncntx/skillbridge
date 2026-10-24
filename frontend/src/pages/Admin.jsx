@@ -1,78 +1,96 @@
 import { useState } from "react";
 import { api } from "../api";
 
-export default function Admin() {
+/** Admin dashboard (paper objective 7): per-program statistics, coverage gaps and the data-loading report. */
+export default function Admin({ onBack }) {
   const [pass, setPass] = useState("");
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
+  const [gapsOnly, setGapsOnly] = useState(false);
 
   const load = async (e) => {
     e?.preventDefault();
     setError("");
-    try { setStats(await api.stats(pass)); }
-    catch (err) { setStats(null); setError(err.message); }
+    try { setStats(await api.adminStats(pass)); } catch (err) { setStats(null); setError(err.message); }
   };
 
   if (!stats) {
     return (
-      <form onSubmit={load} className="mx-auto max-w-sm space-y-3 rounded-xl bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-bold">Admin dashboard</h2>
-        <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Admin passcode"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2" />
+      <form onSubmit={load} className="mx-auto mt-10 max-w-sm space-y-3 rounded-3xl bg-white p-6 shadow-xl">
+        <h2 className="text-xl font-extrabold text-maroon-900">Admin dashboard</h2>
+        <input className="field" type="password" placeholder="Admin passcode" value={pass} onChange={(e) => setPass(e.target.value)} />
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button className="w-full rounded-lg bg-indigo-700 py-2 font-semibold text-white">Open dashboard</button>
+        <div className="flex justify-between">
+          <button type="button" onClick={onBack} className="btn-ghost border border-slate-300">Back</button>
+          <button className="btn-primary">Open</button>
+        </div>
       </form>
     );
   }
 
-  const maxDemand = Math.max(1, ...stats.topSkills.map((s) => s.jobCount));
   const Card = ({ label, value }) => (
-    <div className="rounded-xl bg-white p-4 text-center shadow-sm">
-      <div className="text-3xl font-bold text-indigo-700">{value}</div>
+    <div className="rounded-2xl bg-white p-4 text-center shadow">
+      <div className="text-3xl font-extrabold text-crimson">{value}</div>
       <div className="text-sm text-slate-600">{label}</div>
     </div>
   );
+  const rows = stats.programs.filter((p) => !gapsOnly || p.gap);
+  const maxDemand = Math.max(1, ...stats.topSkills.map((s) => s.jobCount));
+  const r = stats.dataReport;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 text-slate-800">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Employability statistics by program</h2>
-        <button onClick={load} className="rounded-lg bg-white px-3 py-1 text-sm shadow-sm">Refresh</button>
+        <h2 className="text-2xl font-extrabold text-white">Employability statistics by program</h2>
+        <div className="flex gap-2"><button onClick={load} className="btn-ghost">Refresh</button><button onClick={onBack} className="btn-ghost">Exit</button></div>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <Card label="Students" value={stats.totalUsers} />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Card label="Registered students" value={stats.totalUsers} />
         <Card label="Job postings" value={stats.totalJobs} />
         <Card label="Applications" value={stats.totalApplications} />
+        <Card label="Programs with jobs" value={`${stats.programsWithJobs} / ${stats.programsTotal}`} />
       </div>
 
-      <div className="overflow-x-auto rounded-xl bg-white p-4 shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead><tr className="border-b text-slate-500">
-            <th className="py-2">Program</th><th>Students</th><th>Applications</th><th>Jobs targeting</th>
-          </tr></thead>
-          <tbody>
-            {stats.programs.map((p) => (
-              <tr key={p.code} className="border-b last:border-0">
-                <td className="py-2">{p.name}</td><td>{p.users}</td><td>{p.applications}</td>
-                <td className={p.jobsTargeting === 0 ? "text-red-600" : ""}>{p.jobsTargeting}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="rounded-2xl bg-white p-4 shadow">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="font-bold">Programs</h3>
+          <label className="text-sm"><input type="checkbox" checked={gapsOnly} onChange={(e) => setGapsOnly(e.target.checked)} /> Show coverage gaps only</label>
+        </div>
+        <div className="max-h-96 overflow-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="sticky top-0 bg-white text-slate-500"><tr><th className="py-1">Program</th><th>Students</th><th>Applications</th><th>Jobs</th></tr></thead>
+            <tbody>
+              {rows.map((p) => (
+                <tr key={p.code} className="border-t">
+                  <td className="py-1">{p.label} <span className="text-xs text-slate-400">{p.code}</span></td>
+                  <td>{p.users}</td><td>{p.applications}</td>
+                  <td className={p.gap ? "font-bold text-red-600" : ""}>{p.gap ? "no jobs" : p.jobs}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="rounded-xl bg-white p-4 shadow-sm">
-        <h3 className="mb-2 font-semibold">Most in-demand skills</h3>
+      <div className="rounded-2xl bg-white p-4 shadow">
+        <h3 className="mb-2 font-bold">Most in-demand skills</h3>
         {stats.topSkills.map((s) => (
           <div key={s.skill} className="mb-1 flex items-center gap-2 text-sm">
-            <span className="w-40 shrink-0">{s.skill}</span>
-            <div className="h-3 rounded bg-indigo-500" style={{ width: `${(s.jobCount / maxDemand) * 100}%` }} />
-            <span>{s.jobCount}</span>
+            <span className="w-44 shrink-0">{s.skill}</span>
+            <div className="h-3 rounded bg-crimson" style={{ width: `${(s.jobCount / maxDemand) * 60}%` }} /><span>{s.jobCount}</span>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-slate-500">
+      <div className="rounded-2xl bg-white p-4 shadow">
+        <h3 className="mb-1 font-bold">Job data report</h3>
+        <p className="text-sm">{r.jobsLoaded} of {r.rowsRead} rows loaded.</p>
+        {r.problems.length > 0 && (
+          <ul className="mt-2 list-disc pl-5 text-sm text-red-700">{r.problems.map((p) => <li key={p}>{p}</li>)}</ul>
+        )}
+      </div>
+
+      <p className="text-xs text-pink-100">
         Gender (anonymous statistics only, never used in matching):{" "}
         {Object.entries(stats.usersByGender).map(([g, n]) => `${g.toLowerCase()}: ${n}`).join(" · ")}
       </p>

@@ -7,7 +7,10 @@ import com.skillbridge.service.SkillBridgeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-/** Thin REST layer: every endpoint just calls the service, which uses the custom data structures. */
+/**
+ * Thin REST layer: every endpoint calls the service, which uses our own data structures.
+ * Logged-in endpoints read the session token from the "Authorization: Bearer <token>" header.
+ */
 @RestController
 @RequestMapping("/api")
 public class ApiController {
@@ -16,64 +19,105 @@ public class ApiController {
 
     public ApiController(SkillBridgeService service) { this.service = service; }
 
+    // ---- public
     @GetMapping("/health")
     public HealthDto health() { return service.health(); }
 
     @GetMapping("/programs")
-    public ProgramDto[] programs() { return service.programs(); }
+    public ProgramDto[] programs() { return service.programList(); }
 
-    // ---- users
-    @PostMapping("/users")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDto register(@RequestBody RegisterRequest req) { return service.registerUser(req); }
+    @GetMapping("/programs/tree")
+    public TreeDto programTree() { return service.programTree(); }
 
-    @GetMapping("/users/{id}")
-    public UserDto getUser(@PathVariable("id") int id) { return service.getUser(id); }
+    @GetMapping("/programs/{code}/roles")
+    public String[] roles(@PathVariable("code") String code) { return service.rolesFor(code); }
 
-    @PutMapping("/users/{id}/skills")
-    public UserDto setSkills(@PathVariable("id") int id, @RequestBody SkillsRequest req) {
-        return service.setSkills(id, req);
-    }
+    @GetMapping("/programs/{code}/skills")
+    public String[] programSkills(@PathVariable("code") String code) { return service.skillsFor(code); }
 
-    // ---- skills
     @GetMapping("/skills")
-    public String[] skills() { return service.skillIndex(); }
-
-    @GetMapping("/skills/check")
-    public SkillCheckDto checkSkill(@RequestParam(value = "name", defaultValue = "") String name) {
-        return service.checkSkill(name);
+    public String[] skills(@RequestParam(value = "prefix", defaultValue = "") String prefix) {
+        return service.skillSuggestions(prefix);
     }
 
-    // ---- jobs
-    @PostMapping("/jobs")
+    // ---- accounts
+    @PostMapping("/auth/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public JobDto postJob(@RequestBody JobRequest req) { return service.postJob(req); }
+    public AuthDto signup(@RequestBody SignupRequest req) { return service.signup(req); }
+
+    @PostMapping("/auth/login")
+    public AuthDto login(@RequestBody LoginRequest req) { return service.login(req); }
+
+    @PostMapping("/auth/logout")
+    public void logout(@RequestHeader(value = "Authorization", required = false) String auth) { service.logout(auth); }
+
+    @GetMapping("/me")
+    public UserDto me(@RequestHeader(value = "Authorization", required = false) String auth) {
+        return service.me(service.userIdFromToken(auth));
+    }
+
+    @PutMapping("/me")
+    public UserDto updateMe(@RequestHeader(value = "Authorization", required = false) String auth,
+                            @RequestBody ProfileRequest req) {
+        return service.updateProfile(service.userIdFromToken(auth), req);
+    }
+
+    // ---- home feed and jobs
+    @GetMapping("/me/home")
+    public HomeDto home(@RequestHeader(value = "Authorization", required = false) String auth,
+                        @RequestParam(value = "top", defaultValue = "6") int top) {
+        return service.home(service.userIdFromToken(auth), top);
+    }
 
     @GetMapping("/jobs")
-    public JobDto[] jobs() { return service.listJobs(); }
-
-    // ---- matching
-    @GetMapping("/users/{id}/recommendations")
-    public MatchDto[] recommendations(@PathVariable("id") int id,
-                                      @RequestParam(value = "top", defaultValue = "5") int top) {
-        return service.recommendations(id, top);
+    public MatchDto[] jobs(@RequestHeader(value = "Authorization", required = false) String auth,
+                           @RequestParam(value = "q", defaultValue = "") String q) {
+        return service.jobs(service.userIdFromToken(auth), q);
     }
 
-    @GetMapping("/users/{id}/ranked")
-    public MatchDto[] ranked(@PathVariable("id") int id) { return service.ranked(id); }
+    @GetMapping("/jobs/{id}")
+    public MatchDto job(@RequestHeader(value = "Authorization", required = false) String auth,
+                        @PathVariable("id") String id) {
+        return service.jobDetail(service.userIdFromToken(auth), id);
+    }
+
+    // ---- saved jobs
+    @GetMapping("/me/saved")
+    public JobDto[] saved(@RequestHeader(value = "Authorization", required = false) String auth) {
+        return service.savedJobs(service.userIdFromToken(auth));
+    }
+
+    @PostMapping("/me/saved/{jobId}")
+    public JobDto save(@RequestHeader(value = "Authorization", required = false) String auth,
+                       @PathVariable("jobId") String jobId) {
+        return service.saveJob(service.userIdFromToken(auth), jobId);
+    }
+
+    @DeleteMapping("/me/saved/{jobId}")
+    public void unsave(@RequestHeader(value = "Authorization", required = false) String auth,
+                       @PathVariable("jobId") String jobId) {
+        service.unsaveJob(service.userIdFromToken(auth), jobId);
+    }
 
     // ---- applications
-    @PostMapping("/applications")
+    @PostMapping("/me/applications")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApplicationDto apply(@RequestBody ApplyRequest req) { return service.apply(req); }
+    public ApplicationDto apply(@RequestHeader(value = "Authorization", required = false) String auth,
+                                @RequestBody ApplyRequest req) {
+        return service.apply(service.userIdFromToken(auth), req);
+    }
 
-    @GetMapping("/users/{id}/applications")
-    public ApplicationDto[] applications(@PathVariable("id") int id) { return service.userApplications(id); }
+    @GetMapping("/me/applications")
+    public ApplicationDto[] applications(@RequestHeader(value = "Authorization", required = false) String auth) {
+        return service.applications(service.userIdFromToken(auth));
+    }
 
-    @DeleteMapping("/users/{id}/applications/last")
-    public ApplicationDto undoLast(@PathVariable("id") int id) { return service.undoLastApplication(id); }
+    @DeleteMapping("/me/applications/last")
+    public ApplicationDto undoLast(@RequestHeader(value = "Authorization", required = false) String auth) {
+        return service.undoLastApplication(service.userIdFromToken(auth));
+    }
 
-    // ---- admin (simple passcode in a header; no real login, as stated in the paper's limitations)
+    // ---- admin (simple passcode in a header; no admin accounts)
     @GetMapping("/admin/stats")
     public StatsDto stats(@RequestHeader(value = "X-Admin-Passcode", required = false) String passcode) {
         if (passcode == null || !passcode.equals(adminPasscode))

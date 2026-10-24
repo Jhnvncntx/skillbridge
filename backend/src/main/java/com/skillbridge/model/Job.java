@@ -1,28 +1,21 @@
 package com.skillbridge.model;
 
+/** A real job posting loaded from jobs.csv. */
 public class Job {
-    private final String id, title, company, source;   // source: "seed", "employer", later "jsearch"
-    private final Program[] targetPrograms;
-    private final String[] requiredSkills;
+    public final String id, title, role, company, location, description, licensure, link, source, dateCollected;
+    public final String[] programCodes;     // every program this posting fits (primary + others)
+    public final String[] requiredSkills;   // normalized (lower-case)
 
-    public Job(String id, String title, String company, String source,
-               Program[] targetPrograms, String... requiredSkills) {
-        this.id = id; this.title = title; this.company = company; this.source = source;
-        this.targetPrograms = targetPrograms;
-        this.requiredSkills = requiredSkills;   // already normalized by the service layer
+    public Job(String id, String title, String role, String company, String location, String description,
+               String licensure, String link, String source, String dateCollected,
+               String[] programCodes, String[] requiredSkills) {
+        this.id = id; this.title = title; this.role = role; this.company = company; this.location = location;
+        this.description = description; this.licensure = licensure; this.link = link; this.source = source;
+        this.dateCollected = dateCollected; this.programCodes = programCodes; this.requiredSkills = requiredSkills;
     }
 
-    public String getId() { return id; }
-    public String getTitle() { return title; }
-    public String getCompany() { return company; }
-    public String getSource() { return source; }
-    public Program[] getTargetPrograms() { return targetPrograms; }
-    public String[] getRequiredSkills() { return requiredSkills; }
-
-    public boolean targets(Program p) {
-        for (Program t : targetPrograms) if (t == p) return true;
+    public boolean targets(String programCode) {
+        for (String c : programCodes) if (c.equals(programCode)) return true;
         return false;
     }
-
-    @Override public String toString() { return title + " @ " + company; }
 }

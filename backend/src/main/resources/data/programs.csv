@@ -1,0 +1,69 @@
+code,group,program,major,level,status,note
+ARCH,Engineering and Architecture,Bachelor of Science in Architecture,,UG,Confirmed,Licensed Architect roles typically require PRC licensure.
+CE,Engineering and Architecture,Bachelor of Science in Civil Engineering,,UG,Confirmed,Professional roles typically require PRC licensure (Registered Civil Engineer).
+CE-CEM,Engineering and Architecture,Bachelor of Science in Civil Engineering,Construction Engineering and Management,UG,Confirmed,
+CE-SE,Engineering and Architecture,Bachelor of Science in Civil Engineering,Structural Engineering,UG,Confirmed,
+EE,Engineering and Architecture,Bachelor of Science in Electrical Engineering,,UG,Confirmed,Professional roles typically require PRC licensure (Registered Electrical Engineer).
+ECE,Engineering and Architecture,Bachelor of Science in Electronics Engineering,,UG,Confirmed,Professional roles typically require PRC licensure (Registered Electronics Engineer).
+ME,Engineering and Architecture,Bachelor of Science in Mechanical Engineering,,UG,Confirmed,Professional roles typically require PRC licensure (Registered Mechanical Engineer).
+IE,Engineering and Architecture,Bachelor of Science in Industrial Engineering,,UG,Confirmed,
+BSN,"Health, Hospitality, Tourism and Communication",Bachelor of Science in Nursing,,UG,Confirmed,Registered Nurse roles require PRC licensure (PNLE).
+HM,"Health, Hospitality, Tourism and Communication",Bachelor of Science in Hospitality Management,,UG,Confirmed,
+TM,"Health, Hospitality, Tourism and Communication",Bachelor of Science in Tourism Management,,UG,Confirmed,Tour guide roles typically require DOT accreditation.
+COMM,"Health, Hospitality, Tourism and Communication",Bachelor of Arts in Communication,,UG,Confirmed,
+COMM-NM,"Health, Hospitality, Tourism and Communication",Bachelor of Arts in Communication,New Media,UG,Confirmed,
+COMM-CPA,"Health, Hospitality, Tourism and Communication",Bachelor of Arts in Communication,Creative and Performing Arts,UG,Confirmed,
+MIDW,"Health, Hospitality, Tourism and Communication",Bachelor of Science in Midwifery,,UG,Confirmed,Registered Midwife roles require PRC licensure.
+TVTE-ANIM,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Animation,UG,Confirmed,
+TVTE-AUTO,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Automotive Technology,UG,Confirmed,
+TVTE-DRAFT,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Drafting Technology,UG,Confirmed,
+TVTE-ELEX,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Electronics Technology,UG,Confirmed,
+TVTE-ELEC,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Electrical Technology,UG,Confirmed,
+TVTE-MECH,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Mechanical Technology,UG,Confirmed,
+TVTE-CCT,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Civil and Construction Technology,UG,Confirmed,
+TVTE-WFT,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Welding and Fabrication Technology,UG,Confirmed,
+TVTE-HVAC,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,"Heating, Ventilating and Airconditioning",UG,Confirmed,
+TVTE-FSM,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Food and Service Management,UG,Confirmed,
+TVTE-GFD,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,"Garments, Fashion and Design",UG,Confirmed,
+TVTE-HRS,Technical-Vocational Teacher Education,Bachelor of Technical-Vocational Teacher Education,Hotel and Restaurant Services,UG,Confirmed,
+CS,Computing and Multimedia,Bachelor of Science in Computer Science,,UG,Confirmed,
+CS-NDC,Computing and Multimedia,Bachelor of Science in Computer Science,Network and Data Communication,UG,Confirmed,
+CS-SD,Computing and Multimedia,Bachelor of Science in Computer Science,Software Development,UG,Confirmed,
+IT,Computing and Multimedia,Bachelor of Science in Information Technology,,UG,Confirmed,
+IT-NWA,Computing and Multimedia,Bachelor of Science in Information Technology,Network and Web Application,UG,Confirmed,
+EMC-GD,Computing and Multimedia,Bachelor of Science in Entertainment and Multimedia Computing,Game Development,UG,Confirmed,
+EMC-DAT,Computing and Multimedia,Bachelor of Science in Entertainment and Multimedia Computing,Digital Animation Technology,UG,Confirmed,
+BIT-AUTO,Industrial Technology,Bachelor of Industrial Technology,Automotive Technology,UG,Confirmed,
+BIT-DRAFT,Industrial Technology,Bachelor of Industrial Technology,Drafting Technology,UG,Confirmed,
+BIT-ELEX,Industrial Technology,Bachelor of Industrial Technology,Electronics Technology,UG,Confirmed,
+BIT-ELEC,Industrial Technology,Bachelor of Industrial Technology,Electrical Technology,UG,Confirmed,
+BIT-MECH,Industrial Technology,Bachelor of Industrial Technology,Mechanical Technology,UG,Confirmed,
+BIT-WFT,Industrial Technology,Bachelor of Industrial Technology,Welding and Fabrication Technology,UG,Confirmed,
+BIT-HVAC,Industrial Technology,Bachelor of Industrial Technology,"Heating, Ventilating and Air-conditioning",UG,Confirmed,
+BIT-FST,Industrial Technology,Bachelor of Industrial Technology,Food and Service Technology,UG,Confirmed,
+BIT-GFD,Industrial Technology,Bachelor of Industrial Technology,"Garments, Fashion and Design",UG,Confirmed,
+EDD-EM,Post-graduate and Graduate,Doctor of Education,Educational Management,GRAD,Confirmed,
+MAED-EM,Post-graduate and Graduate,Master of Arts in Education,Educational Management,GRAD,Confirmed,
+MAED-GS,Post-graduate and Graduate,Master of Arts in Education,General Science,GRAD,Confirmed,
+MAED-GC,Post-graduate and Graduate,Master of Arts in Education,Guidance and Counseling,GRAD,Confirmed,Guidance Counselor roles require a PRC Registered Guidance Counselor license.
+MAED-FIL,Post-graduate and Graduate,Master of Arts in Education,Filipino,GRAD,Confirmed,
+MAED-LE,Post-graduate and Graduate,Master of Arts in Education,Language Education,GRAD,Confirmed,
+MAED-MATH,Post-graduate and Graduate,Master of Arts in Education,Mathematics,GRAD,Confirmed,
+MAED-SS,Post-graduate and Graduate,Master of Arts in Education,Social Studies,GRAD,Confirmed,
+MAED-THE,Post-graduate and Graduate,Master of Arts in Education,Technology and Home Economics,GRAD,Confirmed,
+MBA,Post-graduate and Graduate,Master in Business Administration,,GRAD,Confirmed,
+MPA,Post-graduate and Graduate,Master in Public Administration,,GRAD,Confirmed,Many government posts are listed on agency sites or PhilJobNet rather than JobStreet.
+MEM,Post-graduate and Graduate,Master in Engineering Management,,GRAD,Confirmed,
+MAN,Post-graduate and Graduate,Master of Arts in Nursing,,GRAD,Confirmed,Registered Nurse roles require PRC licensure (PNLE).
+MPES,Post-graduate and Graduate,Master in Physical Education and Sports,,GRAD,Confirmed,
+CPE,Engineering and Architecture,Bachelor of Science in Computer Engineering,,UG,To confirm,Your own program. It is missing from the updated list but is offered at Main Campus.
+DS,Computing and Multimedia,Bachelor of Science in Data Science,,UG,To confirm,
+HIM,"Health, Hospitality, Tourism and Communication",Bachelor of Science in Health Information Management,,UG,To confirm,
+PH-POP,"Health, Hospitality, Tourism and Communication",Bachelor of Science in Public Health,Population Health,UG,To confirm,
+RADTECH,"Health, Hospitality, Tourism and Communication",Bachelor of Science in Radiologic Technology,,UG,To confirm,Radiologic Technologist roles require PRC licensure.
+COMM-PC,"Health, Hospitality, Tourism and Communication",Bachelor of Arts in Communication,Political Communication,UG,To confirm,
+CE-TE,Engineering and Architecture,Bachelor of Science in Civil Engineering,Transportation Engineering,UG,To confirm,
+BIT-AFT,Industrial Technology,Bachelor of Science in Industrial Technology,Apparel and Fashion Technology,UG,To confirm,
+BIT-ADT,Industrial Technology,Bachelor of Science in Industrial Technology,Architectural Drafting Technology,UG,To confirm,
+BIT-CUL,Industrial Technology,Bachelor of Science in Industrial Technology,Culinary Technology,UG,To confirm,
+BIT-GT,Industrial Technology,Bachelor of Science in Industrial Technology,Garments Technology,UG,To confirm,
