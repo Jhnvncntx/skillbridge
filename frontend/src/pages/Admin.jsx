@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { api } from "../api";
 
+function Card({ label, value }) {
+  return (
+    <div className="rounded-2xl bg-white p-4 text-center shadow">
+      <div className="text-3xl font-extrabold text-crimson">{value}</div>
+      <div className="text-sm text-slate-600">{label}</div>
+    </div>
+  );
+}
+
 /** Admin dashboard (paper objective 7): per-program statistics, coverage gaps and the data-loading report. */
 export default function Admin({ onBack }) {
   const [pass, setPass] = useState("");
@@ -28,12 +37,6 @@ export default function Admin({ onBack }) {
     );
   }
 
-  const Card = ({ label, value }) => (
-    <div className="rounded-2xl bg-white p-4 text-center shadow">
-      <div className="text-3xl font-extrabold text-crimson">{value}</div>
-      <div className="text-sm text-slate-600">{label}</div>
-    </div>
-  );
   const rows = stats.programs.filter((p) => !gapsOnly || p.gap);
   const maxDemand = Math.max(1, ...stats.topSkills.map((s) => s.jobCount));
   const r = stats.dataReport;

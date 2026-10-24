@@ -8,6 +8,23 @@ const EMPTY = {
   programCode: "", gradYear: "", targetRole: "", hardSkills: [], softSkills: [], languages: [],
 };
 
+// NOTE: these helpers must live OUTSIDE Signup. Defined inside, React sees a brand-new component on every
+// keystroke, rebuilds the inputs and the cursor focus is lost.
+function Card({ step, title, error, children }) {
+  return (
+    <div className="mx-auto max-w-xl rounded-3xl bg-white p-6 shadow-xl">
+      <p className="text-xs font-bold uppercase text-maroon-700">Step {step} of 3</p>
+      <h2 className="mb-4 text-2xl font-extrabold text-maroon-900">{title}</h2>
+      {children}
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+function Row({ label, children }) {
+  return <div><label className="mb-1 block text-sm font-semibold">{label}</label>{children}</div>;
+}
+
 /** Canva pages 2-4: personal info -> program and skills -> confirm + privacy notice. */
 export default function Signup({ onDone, onBack }) {
   const [step, setStep] = useState(1);
@@ -49,22 +66,10 @@ export default function Signup({ onDone, onBack }) {
     } catch (err) { setError(err.message); setBusy(false); }
   };
 
-  const Card = ({ title, children }) => (
-    <div className="mx-auto max-w-xl rounded-3xl bg-white p-6 shadow-xl">
-      <p className="text-xs font-bold uppercase text-maroon-700">Step {step} of 3</p>
-      <h2 className="mb-4 text-2xl font-extrabold text-maroon-900">{title}</h2>
-      {children}
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-    </div>
-  );
-  const Row = ({ label, children }) => (
-    <div><label className="mb-1 block text-sm font-semibold">{label}</label>{children}</div>
-  );
-
   return (
     <div className="px-4 py-8">
       {step === 1 && (
-        <Card title="Let me know you!">
+        <Card step={step} error={error} title="Let me know you!">
           <div className="space-y-3">
             <Row label="Full name"><input className="field" value={f.fullName} onChange={set("fullName")} /></Row>
             <div className="grid grid-cols-2 gap-3">
@@ -90,7 +95,7 @@ export default function Signup({ onDone, onBack }) {
       )}
 
       {step === 2 && (
-        <Card title="Let me know you!">
+        <Card step={step} error={error} title="Let me know you!">
           <div className="space-y-4">
             <Row label="Specific degree program">
               <ProgramPicker tree={tree} value={f.programCode} onChange={(code) => setF((p) => ({ ...p, programCode: code, targetRole: "" }))} />
@@ -120,7 +125,7 @@ export default function Signup({ onDone, onBack }) {
       )}
 
       {step === 3 && (
-        <Card title="Are you sure that all of the details are correct?">
+        <Card step={step} error={error} title="Are you sure that all of the details are correct?">
           <dl className="grid grid-cols-3 gap-x-3 gap-y-1 text-sm">
             {[["Name", f.fullName], ["Age", f.age], ["Email", f.email], ["Contact", f.contact || "—"], ["Address", f.address || "—"],
               ["Gender", f.gender ? f.gender.toLowerCase() : "not stated"], ["Program code", f.programCode], ["Graduation", f.gradYear || "—"],

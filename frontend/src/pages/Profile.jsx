@@ -3,6 +3,11 @@ import { api } from "../api";
 import ProgramPicker from "../components/ProgramPicker";
 import TagInput from "../components/TagInput";
 
+// Defined outside Profile so typing does not rebuild the inputs (which would drop the focus).
+function Row({ label, children }) {
+  return <div><label className="mb-1 block text-sm font-semibold">{label}</label>{children}</div>;
+}
+
 /** Canva page 8: view and edit the profile. Changing program, role or skills changes your matches. */
 export default function Profile({ user, onSaved, onLogout, notify }) {
   const [f, setF] = useState({ ...user, age: String(user.age) });
@@ -27,8 +32,6 @@ export default function Profile({ user, onSaved, onLogout, notify }) {
     } catch (e) { notify(e.message, false); }
     finally { setBusy(false); }
   };
-
-  const Row = ({ label, children }) => <div><label className="mb-1 block text-sm font-semibold">{label}</label>{children}</div>;
 
   return (
     <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow">

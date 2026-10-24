@@ -2,19 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { api, applyAndOpen } from "../api";
 import JobCard from "../components/JobCard";
 
-/** Canva page 6: "Recommended for you" + "You might also qualify to". */
-export default function Home({ user, go, notify }) {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState("");
-
-  const load = useCallback(() => {
-    api.home(6).then(setData).catch((e) => setError(e.message));
-  }, []);
-  useEffect(load, [load, user]);
-
-  const apply = async (job) => { const r = await applyAndOpen(job); notify(r.message, r.ok); load(); };
-
-  const Section = ({ title, items, empty }) => (
+function Section({ title, items, empty, go, apply }) {
+  return (
     <section className="mb-8">
       <h2 className="mb-3 text-lg font-extrabold uppercase tracking-wide text-white">{title}</h2>
       {items.length === 0 ? (
@@ -28,6 +17,19 @@ export default function Home({ user, go, notify }) {
       )}
     </section>
   );
+}
+
+/** Canva page 6: "Recommended for you" + "You might also qualify to". */
+export default function Home({ user, go, notify }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+
+  const load = useCallback(() => {
+    api.home(6).then(setData).catch((e) => setError(e.message));
+  }, []);
+  useEffect(load, [load, user]);
+
+  const apply = async (job) => { const r = await applyAndOpen(job); notify(r.message, r.ok); load(); };
 
   return (
     <div>
@@ -39,10 +41,10 @@ export default function Home({ user, go, notify }) {
       {!data && !error && <p className="text-white">Finding your matches…</p>}
       {data && (
         <>
-          <Section title="Recommended for you:" items={data.recommended}
+          <Section go={go} apply={apply} title="Recommended for you:" items={data.recommended}
             empty={<>We don't have postings for your program or target role yet.{" "}
               <button className="font-bold text-gold underline" onClick={() => go("jobs")}>Browse all jobs</button> or update your target role in your profile.</>} />
-          <Section title="You might also qualify to:" items={data.alsoQualify}
+          <Section go={go} apply={apply} title="You might also qualify to:" items={data.alsoQualify}
             empty="Add more hard skills to your profile to see jobs from other programs that fit your skills." />
         </>
       )}
