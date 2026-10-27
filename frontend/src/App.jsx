@@ -145,45 +145,6 @@ export default function App() {
   else if (screen === "app" && user) {
     body = (
       <>
-        {/* <header className="bg-maroon-950/70 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
-            <button
-              onClick={() => go("home")}
-              className="text-xl font-extrabold text-gold"
-            >
-              SKILLBRIDGE
-            </button>
-            <form onSubmit={doSearch} className="flex min-w-50 flex-1">
-              <input
-                className="w-full rounded-full border-2 border-black bg-white px-4 py-1.5"
-                placeholder="ENTER KEYWORDS"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </form>
-            <button
-              onClick={() => go("saved")}
-              className="rounded bg-crimson px-3 py-1 text-sm font-bold text-white"
-            >
-              SAVED JOBS
-            </button>
-            <button
-              onClick={() => go("applications")}
-              className="rounded bg-crimson px-3 py-1 text-sm font-bold text-white"
-            >
-              MY APPLICATIONS
-            </button>
-            <button
-              onClick={() => go("profile")}
-              className="text-center text-xs text-white"
-            >
-              <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-white font-bold text-maroon-900">
-                {user.fullName[0]}
-              </span>
-              MY PROFILE
-            </button>
-          </div>
-        </header> */}
         <header className="sticky top-0 z-50 bg-maroon-950/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
             {/* Logo */}
