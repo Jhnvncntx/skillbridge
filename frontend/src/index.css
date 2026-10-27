@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* SkillBridge theme (maroon / gold from the Canva concept) */
+@theme {
+  --color-maroon-950: #2a0309;
+  --color-maroon-900: #4a0610;
+  --color-maroon-800: #6b0f1a;
+  --color-maroon-700: #8c1a24;
+  --color-crimson: #d91e25;
+  --color-gold: #ffe27a;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #2a0309 0%, #5a1118 60%, #6b1a20 100%) fixed;
+  color: #1e293b;
+}
+
+.field {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  background: white;
+  padding: 0.5rem 0.75rem;
+}
+.btn-primary {
+  border-radius: 0.5rem;
+  background: var(--color-crimson);
+  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  color: white;
+}
+.btn-primary:disabled { opacity: 0.5; }
+.btn-ghost {
+  border-radius: 0.5rem;
+  background: white;
+  padding: 0.4rem 0.9rem;
+  font-weight: 600;
+  color: #4a0610;
+}
+.clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
