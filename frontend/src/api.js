@@ -20,7 +20,7 @@ async function call(path, method = "GET", body, extraHeaders) {
   if (!res.ok) {
     const err = new Error(data?.error || `Request failed (${res.status})`);
     err.status = res.status;
-    if (res.status === 401 && token) window.dispatchEvent(new Event("sb-unauthorized"));   // session expired
+    if (res.status === 401 && token) window.dispatchEvent(new CustomEvent("sb-unauthorized", { detail: err.message }));   // session ended
     throw err;
   }
   return data;
@@ -45,6 +45,7 @@ export const api = {
   apply: (jobId, note = "") => call("/api/me/applications", "POST", { jobId, note }),
   applications: () => call("/api/me/applications"),
   undoLast: () => call("/api/me/applications/last", "DELETE"),
+  deleteAccount: (password) => call("/api/me/delete", "POST", { password }),
   adminStats: (passcode) => call("/api/admin/stats", "GET", undefined, { "X-Admin-Passcode": passcode }),
 };
 

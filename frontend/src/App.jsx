@@ -10,6 +10,10 @@ import Applications from "./pages/Applications";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 
+// Log out after this many minutes without any mouse, keyboard or touch activity (the server enforces the same limit).
+const IDLE_MS = (Number(import.meta.env.VITE_IDLE_MINUTES) || 10) * 60 * 1000;
+const KEEP_ALIVE_MS = 2 * 60 * 1000;     // while the user is active, tell the server now and then so its timer agrees
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [screen, setScreen] = useState("login");           // login | signup | welcome | app | admin
@@ -35,12 +39,36 @@ export default function App() {
       .finally(() => setBooting(false));
   }, []);
 
-  // The server keeps sessions in memory, so a restart ends them: send the user back to login.
+  // The server ended the session (inactivity, or a restart): send the user back to login.
   useEffect(() => {
-    const expired = () => { setToken(null); setUser(null); setScreen("login"); setNotice("Your session ended (the server may have restarted). Please log in again."); };
+    const expired = (e) => {
+      setToken(null); setUser(null); setScreen("login");
+      setNotice(e.detail && e.detail.includes("inactivity") ? e.detail
+        : "Your session ended (the server may have restarted). Please log in again.");
+    };
     window.addEventListener("sb-unauthorized", expired);
     return () => window.removeEventListener("sb-unauthorized", expired);
   }, []);
+
+  // Inactivity check: any mouse, key, scroll or touch counts as activity.
+  useEffect(() => {
+    if (!user || (screen !== "app" && screen !== "welcome")) return undefined;
+    let lastActivity = Date.now(), lastPing = Date.now();
+    const onActivity = () => {
+      lastActivity = Date.now();
+      if (lastActivity - lastPing > KEEP_ALIVE_MS) { lastPing = lastActivity; api.me().catch(() => {}); }
+    };
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    events.forEach((ev) => window.addEventListener(ev, onActivity, { passive: true }));
+    const timer = setInterval(() => {
+      if (Date.now() - lastActivity > IDLE_MS) {
+        api.logout().catch(() => {});
+        setToken(null); setUser(null); setScreen("login");
+        setNotice("You were logged out due to inactivity. Please log in again.");
+      }
+    }, 15000);
+    return () => { events.forEach((ev) => window.removeEventListener(ev, onActivity)); clearInterval(timer); };
+  }, [user, screen]);
 
   const notify = useCallback((message, ok = true) => {
     setToast({ message, ok });
@@ -80,7 +108,8 @@ export default function App() {
           {nav.page === "jobs" && <Jobs q={nav.q} selectedId={nav.jobId} onSelect={(id) => setNav({ ...nav, jobId: id })} notify={notify} />}
           {nav.page === "saved" && <Saved go={go} notify={notify} />}
           {nav.page === "applications" && <Applications notify={notify} />}
-          {nav.page === "profile" && <Profile user={user} onSaved={setUser} onLogout={logout} notify={notify} />}
+          {nav.page === "profile" && <Profile user={user} onSaved={setUser} onLogout={logout} notify={notify}
+            onDeleted={() => { setToken(null); setUser(null); setScreen("login"); setNotice("Your account and all of its data were deleted."); }} />}
         </main>
       </>
     );

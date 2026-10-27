@@ -4,6 +4,7 @@ import com.skillbridge.datastructures.MyHashTable;
 import com.skillbridge.datastructures.MyLinkedList;
 import com.skillbridge.model.Job;
 import com.skillbridge.model.Program;
+import com.skillbridge.util.JobKey;
 import com.skillbridge.util.Text;
 
 import java.io.IOException;
@@ -120,7 +121,7 @@ public final class DataLoader {
             if (!missing.isEmpty()) { report.problems.add(label + ": missing" + missing.substring(0, missing.length() - 1)); continue; }
 
             if (!link.toLowerCase().startsWith("http")) { report.problems.add(label + ": link must start with http"); continue; }
-            String linkKey = link.toLowerCase().replaceAll("/+$", "");
+            String linkKey = JobKey.of(link);          // stable id, ignores tracking parameters
             if (seenLinks.get(linkKey) != null) { report.problems.add(label + ": duplicate link"); continue; }
 
             MyLinkedList<String> codes = new MyLinkedList<>();
@@ -135,7 +136,7 @@ public final class DataLoader {
             if (badCode != null) { report.problems.add(label + ": unknown program code " + badCode); continue; }
 
             seenLinks.put(linkKey, true);
-            jobs.add(new Job("J" + (jobs.size() + 1), title, role, company, location, description,
+            jobs.add(new Job(linkKey, title, role, company, location, description,
                     col(r, 8), link, source, date, Text.toArray(codes), skills));
         }
         report.jobsLoaded = jobs.size();

@@ -4,16 +4,18 @@ package com.skillbridge.dto;
 public final class Requests {
     private Requests() {}
 
-    public record SignupRequest(String fullName, Integer age, String email, String contact, String address,
-                                String gender, String password, String programCode, String gradYear,
+    public record SignupRequest(String fullName, Integer age, String email, String gender, String password, String programCode, String gradYear,
                                 String targetRole, String[] hardSkills, String[] softSkills, String[] languages) {}
 
     public record LoginRequest(String email, String password) {}
 
     /** Everything a user can edit on the profile page (email and password are not editable here). */
-    public record ProfileRequest(String fullName, Integer age, String contact, String address, String gender,
+    public record ProfileRequest(String fullName, Integer age, String gender,
                                  String programCode, String gradYear, String targetRole,
                                  String[] hardSkills, String[] softSkills, String[] languages) {}
 
     public record ApplyRequest(String jobId, String note) {}
+
+    /** The password is asked again before an account is deleted. */
+    public record DeleteAccountRequest(String password) {}
 }

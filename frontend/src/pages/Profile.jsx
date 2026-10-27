@@ -8,8 +8,45 @@ function Row({ label, children }) {
   return <div><label className="mb-1 block text-sm font-semibold">{label}</label>{children}</div>;
 }
 
+// Defined outside Profile (same reason as Row): a component declared inside would be rebuilt on every keystroke.
+function DeleteAccount({ onDeleted, notify }) {
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const confirmDelete = async () => {
+    setBusy(true);
+    try { await api.deleteAccount(password); onDeleted(); }
+    catch (e) { notify(e.message, false); setBusy(false); }
+  };
+
+  return (
+    <div className="mt-8 border-t pt-4">
+      {!open ? (
+        <button onClick={() => setOpen(true)} className="text-sm font-semibold text-red-700 underline">Delete my account</button>
+      ) : (
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4">
+          <p className="text-sm font-bold text-red-800">Delete your account?</p>
+          <p className="mt-1 text-sm text-red-700">
+            This permanently deletes your profile, saved jobs and applications. It cannot be undone.
+          </p>
+          <input className="field mt-3" type="password" placeholder="Enter your password to confirm" value={password}
+            onChange={(e) => setPassword(e.target.value)} />
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => { setOpen(false); setPassword(""); }} className="btn-ghost border border-slate-300">Cancel</button>
+            <button onClick={confirmDelete} disabled={!password || busy}
+              className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white disabled:opacity-50">
+              {busy ? "Deleting…" : "Yes, delete everything"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Canva page 8: view and edit the profile. Changing program, role or skills changes your matches. */
-export default function Profile({ user, onSaved, onLogout, notify }) {
+export default function Profile({ user, onSaved, onLogout, onDeleted, notify }) {
   const [f, setF] = useState({ ...user, age: String(user.age) });
   const [tree, setTree] = useState(null);
   const [roles, setRoles] = useState([]);
@@ -48,8 +85,6 @@ export default function Profile({ user, onSaved, onLogout, notify }) {
             </select>
           </Row>
         </div>
-        <Row label="Contact number"><input className="field" value={f.contact} onChange={set("contact")} /></Row>
-        <Row label="Home address"><input className="field" value={f.address} onChange={set("address")} /></Row>
         <Row label="Specific degree program">
           <ProgramPicker tree={tree} value={f.programCode} onChange={(code) => code && setF((p) => ({ ...p, programCode: code }))} />
         </Row>
@@ -68,6 +103,7 @@ export default function Profile({ user, onSaved, onLogout, notify }) {
         <button onClick={onLogout} className="btn-ghost border border-slate-300">Log out</button>
         <button onClick={save} disabled={busy} className="btn-primary">{busy ? "Saving…" : "Save profile"}</button>
       </div>
+      <DeleteAccount onDeleted={onDeleted} notify={notify} />
     </div>
   );
 }

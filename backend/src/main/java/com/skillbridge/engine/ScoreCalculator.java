@@ -21,7 +21,7 @@ public final class ScoreCalculator {
 
     private ScoreCalculator() {}
 
-    public static ScoreBreakdown breakdown(String programCode, String targetRole, MyLinkedList<String> hardSkills, Job job) {
+    public static ScoreBreakdown breakdown(String[] programCodes, String targetRole, MyLinkedList<String> hardSkills, Job job) {
         MyLinkedList<String> matched = new MyLinkedList<>(), missing = new MyLinkedList<>();
         for (String required : job.requiredSkills) {
             if (hardSkills.contains(required)) matched.add(required); else missing.add(required);
@@ -31,7 +31,7 @@ public final class ScoreCalculator {
 
         String wanted = Text.norm(targetRole);
         double rolePart = !wanted.isEmpty() && wanted.equals(Text.norm(job.role)) ? ROLE_POINTS : 0;
-        double programPart = job.targets(programCode) ? PROGRAM_POINTS : 0;
+        double programPart = job.targetsAny(programCodes) ? PROGRAM_POINTS : 0;
 
         return new ScoreBreakdown(rolePart, skillPart, programPart, Text.toArray(matched), Text.toArray(missing));
     }

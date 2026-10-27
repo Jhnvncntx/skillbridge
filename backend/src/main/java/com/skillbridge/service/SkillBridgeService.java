@@ -8,6 +8,7 @@ import com.skillbridge.dto.Requests.*;
 import com.skillbridge.dto.Responses.*;
 import com.skillbridge.engine.*;
 import com.skillbridge.model.*;
+import com.skillbridge.persistence.Persistence;
 import com.skillbridge.util.Text;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +18,14 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.LongSupplier;
 
 /**
- * All business logic. Data lives in memory in our own data structures and is reloaded from the
- * CSV files on every start. Methods are synchronized because the structures are not thread-safe
- * and the web server uses several threads.
+ * All business logic. Working copies of the data live in memory in our own data structures.
+ * Whenever users, saved jobs or applications change, the change is saved through `Persistence` FIRST
+ * (PostgreSQL when DATABASE_URL is set), and only then applied in memory, so a failed save never leaves
+ * the two out of step. Job listings always come from jobs.csv.
+ * Methods are synchronized because the structures are not thread-safe and the server uses several threads.
  */
 @Service
 public class SkillBridgeService {
@@ -30,19 +34,28 @@ public class SkillBridgeService {
     // ---- reference data (loaded from CSV)
     private final MyLinkedList<Program> programs;
     private final MyHashTable<String, Program> programByCode = new MyHashTable<>();
+    private final MyHashTable<String, String> baseProgramOf = new MyHashTable<>();   // major code -> base program code
     private final MyHashTable<String, Keywords> keywords;
     private final MyTree<ProgramNode> programTree = new MyTree<>(new ProgramNode("BPSU Main Campus", null));
     private final MatchingEngine engine = new MatchingEngine();
     private final LoadReport report = new LoadReport();
 
-    // ---- accounts and activity
+    // ---- storage and accounts
+    private final Persistence db;
     private final MyHashTable<String, User> usersByEmail = new MyHashTable<>();
     private final MyHashTable<String, User> usersById = new MyHashTable<>();
     private final MyLinkedList<User> userList = new MyLinkedList<>();
-    private final MyHashTable<String, Integer> sessions = new MyHashTable<>();        // token -> user id
     private final MyLinkedList<Application> applications = new MyLinkedList<>();
     private final MyHashTable<String, MyStack<Application>> undoStacks = new MyHashTable<>();   // user id -> stack
-    private int nextUserId = 1, nextAppId = 1;
+
+    // ---- sessions (memory only): token -> who and when they were last active
+    private static class Session {
+        final int userId; long lastActive;
+        Session(int userId, long lastActive) { this.userId = userId; this.lastActive = lastActive; }
+    }
+    private final MyHashTable<String, Session> sessions = new MyHashTable<>();
+    private final long sessionMillis;
+    private LongSupplier clock = System::currentTimeMillis;
 
     /** Tree node payload: a label, plus the program it stands for (null for colleges/groups). */
     private static class ProgramNode {
@@ -50,7 +63,14 @@ public class SkillBridgeService {
         ProgramNode(String name, Program program) { this.name = name; this.program = program; }
     }
 
+    /** Used by Spring: storage from DATABASE_URL, inactivity limit from SESSION_MINUTES (default 10). */
     public SkillBridgeService() {
+        this(Persistence.fromEnvironment(), envInt("SESSION_MINUTES", 10), !"false".equalsIgnoreCase(System.getenv("SEED_DEMO")));
+    }
+
+    public SkillBridgeService(Persistence db, int sessionMinutes, boolean seedDemo) {
+        this.db = db;
+        this.sessionMillis = sessionMinutes * 60_000L;
         try {
             programs = DataLoader.loadPrograms(DataLoader.readResource("data/programs.csv"));
             keywords = DataLoader.loadKeywords(DataLoader.readResource("data/program_keywords.csv"));
@@ -67,10 +87,53 @@ public class SkillBridgeService {
         System.out.println("SkillBridge data: " + programs.size() + " programs, " + report.jobsLoaded + " jobs loaded, "
                 + report.problems.size() + " job rows skipped.");
         for (String problem : report.problems) System.out.println("  skipped: " + problem);
-        if (!"false".equalsIgnoreCase(System.getenv("SEED_DEMO"))) DemoData.load(this);
+
+        db.init();
+        loadSavedData();
+        System.out.println("SkillBridge storage: " + (db.isEnabled() ? "PostgreSQL (data is saved)" : "memory only (data is lost on restart)")
+                + ", " + userList.size() + " accounts, " + applications.size() + " applications.");
+        if (seedDemo) DemoData.load(this);
     }
 
-    /** College group -> program -> major. Programs with majors become parents of their major nodes. */
+    private static int envInt(String name, int fallback) {
+        try { return Integer.parseInt(System.getenv(name)); } catch (Exception e) { return fallback; }
+    }
+
+    /** For tests: replace the clock so the inactivity limit can be checked without waiting. */
+    public synchronized void useClock(LongSupplier c) { this.clock = c; }
+
+    /** Reads users, saved jobs and applications from storage into the in-memory structures. */
+    private void loadSavedData() {
+        Persistence.Loaded data = db.load();
+        for (User u : data.users) {
+            // keep only saved jobs that still exist in jobs.csv (the rows stay in the database)
+            MyLinkedList<String> keep = new MyLinkedList<>();
+            for (String key : u.savedJobIds) if (engine.findJob(key) != null) keep.add(key);
+            u.savedJobIds.clear();
+            for (String key : keep) u.savedJobIds.add(key);
+            registerInMemory(u);
+        }
+        for (Application a : data.applications) {
+            if (usersById.get(String.valueOf(a.userId)) == null) continue;
+            applications.add(a);
+            pushUndo(a);                          // oldest first, so the newest ends up on top of the stack
+        }
+    }
+
+    private void registerInMemory(User u) {
+        usersByEmail.put(u.email, u);
+        usersById.put(String.valueOf(u.id), u);
+        userList.add(u);
+    }
+
+    private void pushUndo(Application a) {
+        String key = String.valueOf(a.userId);
+        MyStack<Application> stack = undoStacks.get(key);
+        if (stack == null) { stack = new MyStack<>(); undoStacks.put(key, stack); }
+        stack.push(a);
+    }
+
+    /** College group -> program -> major. Also records which program each major belongs to. */
     private void buildProgramTree() {
         for (Program p : programs) {
             MyTree.Node<ProgramNode> group = findChild(programTree.getRoot(), p.group);
@@ -85,6 +148,12 @@ public class SkillBridgeService {
             }
             if (!p.major.isEmpty()) prog.addChild(new ProgramNode(p.major, p));
         }
+        // a major inherits the jobs of its base program (for example CS-SD also matches jobs tagged CS)
+        for (MyTree.Node<ProgramNode> group : programTree.getRoot().children)
+            for (MyTree.Node<ProgramNode> prog : group.children)
+                if (prog.data.program != null)
+                    for (MyTree.Node<ProgramNode> major : prog.children)
+                        if (major.data.program != null) baseProgramOf.put(major.data.program.code, prog.data.program.code);
     }
 
     private MyTree.Node<ProgramNode> findChild(MyTree.Node<ProgramNode> parent, String name) {
@@ -92,8 +161,16 @@ public class SkillBridgeService {
         return null;
     }
 
+    /** The student's own program code, plus the base program when the student is in a major. */
+    private String[] programCodesFor(String code) {
+        String base = baseProgramOf.get(code);
+        return base == null ? new String[]{code} : new String[]{code, base};
+    }
+
     // ================================================================== reference data endpoints
-    public synchronized HealthDto health() { return new HealthDto("ok", programs.size(), engine.jobCount(), userList.size()); }
+    public synchronized HealthDto health() {
+        return new HealthDto("ok", programs.size(), engine.jobCount(), userList.size(), db.isEnabled() ? "connected" : "memory-only");
+    }
 
     /** Flat program list in tree order (a depth-first traversal of the program tree). */
     public synchronized ProgramDto[] programList() {
@@ -117,11 +194,12 @@ public class SkillBridgeService {
     /** Suggested target roles for a program: the guide's keywords first, then roles seen in real postings. */
     public synchronized String[] rolesFor(String programCode) {
         Program p = requireProgram(programCode);
+        String[] codes = programCodesFor(p.code);
         MyLinkedList<String> roles = new MyLinkedList<>();
         Keywords k = keywords.get(p.code);
         if (k != null) for (String r : k.roles) roles.add(r);
         for (Job j : engine.allJobs())
-            if (j.targets(p.code) && !containsIgnoreCase(roles, j.role)) roles.add(j.role);
+            if (j.targetsAny(codes) && !containsIgnoreCase(roles, j.role)) roles.add(j.role);
         String[] out = new String[roles.size()];
         int i = 0;
         for (String r : roles) out[i++] = r;
@@ -152,12 +230,11 @@ public class SkillBridgeService {
         String password = r.password() == null ? "" : r.password();
         if (password.length() < 8 || password.length() > 72) throw ApiException.badRequest("Password must be 8-72 characters.");
 
-        User u = new User(nextUserId++, email, PasswordHasher.hash(password));
-        applyProfile(u, name, r.age(), r.contact(), r.address(), r.gender(), r.programCode(), r.gradYear(),
+        User u = new User(0, email, PasswordHasher.hash(password));
+        applyProfile(u, name, r.age(), r.gender(), r.programCode(), r.gradYear(),
                 r.targetRole(), r.hardSkills(), r.softSkills(), r.languages());
-        usersByEmail.put(email, u);
-        usersById.put(String.valueOf(u.id), u);
-        userList.add(u);
+        u.id = db.insertUser(u);                     // save first; a failure here leaves memory untouched
+        registerInMemory(u);
         return new AuthDto(newSession(u), toDto(u));
     }
 
@@ -172,15 +249,24 @@ public class SkillBridgeService {
 
     public synchronized void logout(String authHeader) {
         String token = bearer(authHeader);
-        if (token != null) sessions.put(token, -1);
+        if (token != null) sessions.remove(token);
     }
 
     private String newSession(User u) {
+        purgeExpiredSessions();
         byte[] bytes = new byte[24];
         RANDOM.nextBytes(bytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        sessions.put(token, u.id);
+        sessions.put(token, new Session(u.id, clock.getAsLong()));
         return token;
+    }
+
+    private void purgeExpiredSessions() {
+        long now = clock.getAsLong();
+        for (String token : sessions.keys()) {
+            Session s = sessions.get(token);
+            if (s != null && now - s.lastActive > sessionMillis) sessions.remove(token);
+        }
     }
 
     private static String bearer(String header) {
@@ -188,12 +274,21 @@ public class SkillBridgeService {
         return header.substring(7).trim();
     }
 
-    /** Turns the Authorization header into a user id, or throws 401. */
+    /**
+     * Turns the Authorization header into a user id, or throws 401.
+     * Every request counts as activity: the session ends after SESSION_MINUTES (default 10) without one.
+     */
     public synchronized int userIdFromToken(String authHeader) {
         String token = bearer(authHeader);
-        Integer id = token == null ? null : sessions.get(token);
-        if (id == null || id < 0) throw ApiException.unauthorized("Please log in.");
-        return id;
+        Session s = token == null ? null : sessions.get(token);
+        if (s == null) throw ApiException.unauthorized("Please log in.");
+        long now = clock.getAsLong();
+        if (now - s.lastActive > sessionMillis) {
+            sessions.remove(token);
+            throw ApiException.unauthorized("You were logged out due to inactivity. Please log in again.");
+        }
+        s.lastActive = now;
+        return s.userId;
     }
 
     public synchronized UserDto me(int userId) { return toDto(requireUser(userId)); }
@@ -203,26 +298,44 @@ public class SkillBridgeService {
         User u = requireUser(userId);
         String name = Text.clean(r.fullName());
         if (name.length() < 2 || name.length() > 80) throw ApiException.badRequest("Full name is required (2-80 characters).");
-        applyProfile(u, name, r.age(), r.contact(), r.address(), r.gender(), r.programCode(), r.gradYear(),
+        User draft = u.copy();                       // validate and save the draft, then copy it into memory
+        applyProfile(draft, name, r.age(), r.gender(), r.programCode(), r.gradYear(),
                 r.targetRole(), r.hardSkills(), r.softSkills(), r.languages());
+        db.updateUser(draft);
+        u.takeProfileFrom(draft);
         return toDto(u);
     }
 
-    private void applyProfile(User u, String name, Integer age, String contact, String address, String gender,
-                              String programCode, String gradYear, String targetRole,
-                              String[] hard, String[] soft, String[] languages) {
+    /** Deletes the account and everything stored for it (profile, saved jobs, applications, sessions). */
+    public synchronized void deleteAccount(int userId, DeleteAccountRequest r) {
+        User u = requireUser(userId);
+        if (r == null || r.password() == null || !PasswordHasher.verify(r.password(), u.passwordHash))
+            // 403, not 401: the front end treats 401 as "session ended" and would log the user out
+            throw ApiException.forbidden("Incorrect password. Your account was not deleted.");
+        db.deleteUser(userId);                       // the database removes saved jobs and applications too
+        usersById.remove(String.valueOf(userId));
+        usersByEmail.remove(u.email);
+        userList.remove(u);
+        MyLinkedList<Application> mine = new MyLinkedList<>();
+        for (Application a : applications) if (a.userId == userId) mine.add(a);
+        for (Application a : mine) applications.remove(a);
+        undoStacks.remove(String.valueOf(userId));
+        for (String token : sessions.keys()) {
+            Session s = sessions.get(token);
+            if (s != null && s.userId == userId) sessions.remove(token);
+        }
+    }
+
+    private void applyProfile(User u, String name, Integer age, String gender, String programCode, String gradYear,
+                              String targetRole, String[] hard, String[] soft, String[] languages) {
         if (age == null || age < 15 || age > 100) throw ApiException.badRequest("Age must be between 15 and 100.");
-        String c = Text.clean(contact);
-        if (!c.isEmpty() && !c.matches("^[0-9+\\-() ]{7,20}$")) throw ApiException.badRequest("Contact number looks invalid.");
-        String a = Text.clean(address);
-        if (a.length() > 200) throw ApiException.badRequest("Address is too long (max 200 characters).");
         Program program = requireProgram(programCode);
         String year = Text.clean(gradYear);
         if (!year.isEmpty() && !year.matches("^(20\\d\\d|2100)$")) throw ApiException.badRequest("Graduation year must look like 2026.");
         String role = Text.clean(targetRole);
         if (role.length() > 100) throw ApiException.badRequest("Target role is too long.");
 
-        u.fullName = name; u.age = age; u.contact = c; u.address = a;
+        u.fullName = name; u.age = age;
         u.gender = parseGender(gender); u.programCode = program.code; u.gradYear = year; u.targetRole = role;
         u.hardSkills = cleanList(hard, 30, "Hard skills");
         u.softSkills = cleanList(soft, 20, "Soft skills");
@@ -253,46 +366,46 @@ public class SkillBridgeService {
         User u = requireUser(userId);
         Job j = requireJob(jobId);
         MatchProfile p = profile(u);
-        ScoreBreakdown b = ScoreCalculator.breakdown(p.programCode, p.targetRole, p.hardSkills, j);
+        ScoreBreakdown b = ScoreCalculator.breakdown(p.programCodes, p.targetRole, p.hardSkills, j);
         return toDto(u, new MatchResult(j, b, 0));
     }
 
     public synchronized JobDto[] savedJobs(int userId) {
         User u = requireUser(userId);
-        JobDto[] out = new JobDto[u.savedJobIds.size()];
+        int count = 0;
+        for (String id : u.savedJobIds) if (engine.findJob(id) != null) count++;
+        JobDto[] out = new JobDto[count];
         int i = 0;
-        for (String id : u.savedJobIds) out[i++] = toDto(u, engine.findJob(id));
+        for (String id : u.savedJobIds) { Job j = engine.findJob(id); if (j != null) out[i++] = toDto(u, j); }
         return out;
     }
 
     public synchronized JobDto saveJob(int userId, String jobId) {
         User u = requireUser(userId);
         Job j = requireJob(jobId);
-        if (!u.savedJobIds.contains(j.id)) u.savedJobIds.add(j.id);
+        if (!u.savedJobIds.contains(j.id)) { db.saveJob(userId, j.id); u.savedJobIds.add(j.id); }
         return toDto(u, j);
     }
 
     public synchronized void unsaveJob(int userId, String jobId) {
         User u = requireUser(userId);
-        u.savedJobIds.remove(jobId);
+        if (u.savedJobIds.contains(jobId)) { db.unsaveJob(userId, jobId); u.savedJobIds.remove(jobId); }
     }
 
     // ================================================================== applications
     /** Records the application (paperless). The front end then opens the job's original link. */
     public synchronized ApplicationDto apply(int userId, ApplyRequest r) {
         if (r == null || r.jobId() == null || r.jobId().isBlank()) throw ApiException.badRequest("'jobId' is required.");
-        User u = requireUser(userId);
+        requireUser(userId);
         Job j = requireJob(r.jobId().trim());
         String note = Text.clean(r.note());
         if (note.length() > 500) throw ApiException.badRequest("Note is too long (max 500 characters).");
         if (hasApplied(userId, j.id)) throw ApiException.conflict("You already applied to this job.");
 
-        Application app = new Application(nextAppId++, userId, j.id, note, Instant.now().toString());
+        Application app = new Application(0, userId, j.id, j.title, j.company, j.link, note, Instant.now().toString());
+        app.id = db.insertApplication(app);          // save first
         applications.add(app);
-        String key = String.valueOf(userId);
-        MyStack<Application> stack = undoStacks.get(key);
-        if (stack == null) { stack = new MyStack<>(); undoStacks.put(key, stack); }
-        stack.push(app);                                       // stack = undo history
+        pushUndo(app);                               // stack = undo history
         return toDto(app);
     }
 
@@ -310,7 +423,9 @@ public class SkillBridgeService {
         requireUser(userId);
         MyStack<Application> stack = undoStacks.get(String.valueOf(userId));
         if (stack == null || stack.isEmpty()) throw ApiException.notFound("No application to undo.");
-        Application app = stack.pop();
+        Application app = stack.peek();
+        db.deleteApplication(app.id);                // remove from storage before changing memory
+        stack.pop();
         applications.remove(app);
         return toDto(app);
     }
@@ -327,8 +442,16 @@ public class SkillBridgeService {
         Gender[] genders = Gender.values();
         int[] genderCounts = new int[genders.length];
 
-        for (User u : userList) { users[programByCode.get(u.programCode).index]++; genderCounts[u.gender.ordinal()]++; }
-        for (Application a : applications) apps[programByCode.get(requireUser(a.userId).programCode).index]++;
+        for (User u : userList) {
+            Program p = programByCode.get(u.programCode);
+            if (p != null) users[p.index]++;
+            genderCounts[u.gender.ordinal()]++;
+        }
+        for (Application a : applications) {
+            User owner = usersById.get(String.valueOf(a.userId));
+            Program p = owner == null ? null : programByCode.get(owner.programCode);
+            if (p != null) apps[p.index]++;
+        }
         for (Job j : engine.allJobs()) for (String code : j.programCodes) jobs[programByCode.get(code).index]++;
 
         ProgramStat[] rows = new ProgramStat[n];
@@ -349,16 +472,15 @@ public class SkillBridgeService {
     }
 
     // ================================================================== helpers
-    /** Package-private so DemoData can create accounts without going through HTTP validation. */
-    synchronized User addDemoUser(String email, String password, String name, int age, String programCode,
+    /** Package-private so DemoData can create accounts without going through HTTP validation. Skips existing ones. */
+    synchronized void addDemoUser(String email, String password, String name, int age, String programCode,
                                   String targetRole, String[] hardSkills, String[] soft, String[] languages) {
-        SignupRequest r = new SignupRequest(name, age, email, "", "", "UNDISCLOSED", password, programCode, "2026",
-                targetRole, hardSkills, soft, languages);
-        signup(r);
-        return usersByEmail.get(email);
+        if (usersByEmail.get(email) != null) return;        // already saved from an earlier start
+        signup(new SignupRequest(name, age, email, "UNDISCLOSED", password, programCode, "2026",
+                targetRole, hardSkills, soft, languages));
     }
 
-    private MatchProfile profile(User u) { return new MatchProfile(u.programCode, u.targetRole, u.hardSkillList()); }
+    private MatchProfile profile(User u) { return new MatchProfile(programCodesFor(u.programCode), u.targetRole, u.hardSkillList()); }
 
     private User requireUser(int id) {
         User u = usersById.get(String.valueOf(id));
@@ -389,7 +511,7 @@ public class SkillBridgeService {
     private static String[] cleanList(String[] raw, int max, String label) {
         MyLinkedList<String> list = new MyLinkedList<>();
         if (raw != null) for (String s : raw) {
-            String n = Text.norm(s);
+            String n = Text.norm(s).replace(';', ',');         // ';' separates items in the database
             if (n.isEmpty()) continue;
             if (n.length() > 40) throw ApiException.badRequest(label + ": '" + n.substring(0, 20) + "...' is too long (max 40 characters).");
             if (!list.contains(n)) list.add(n);
@@ -405,8 +527,9 @@ public class SkillBridgeService {
 
     private UserDto toDto(User u) {
         Program p = programByCode.get(u.programCode);
-        return new UserDto(u.id, u.fullName, u.age, u.email, u.contact, u.address, u.gender.name(), p.code, p.label(),
-                p.group, u.gradYear, u.targetRole, u.hardSkills, u.softSkills, u.languages);
+        return new UserDto(u.id, u.fullName, u.age, u.email, u.gender.name(), u.programCode,
+                p == null ? u.programCode : p.label(), p == null ? "" : p.group, u.gradYear, u.targetRole,
+                u.hardSkills, u.softSkills, u.languages);
     }
 
     private JobDto toDto(User u, Job j) {
@@ -426,7 +549,6 @@ public class SkillBridgeService {
     }
 
     private ApplicationDto toDto(Application a) {
-        Job j = engine.findJob(a.jobId);
-        return new ApplicationDto(a.id, a.jobId, j.title, j.company, j.link, a.note, a.appliedAt);
+        return new ApplicationDto(a.id, a.jobId, a.jobTitle, a.company, a.link, a.note, a.appliedAt);
     }
 }

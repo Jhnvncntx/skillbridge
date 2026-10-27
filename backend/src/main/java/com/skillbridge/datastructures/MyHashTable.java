@@ -36,6 +36,20 @@ public class MyHashTable<K, V> {
         return null;
     }
 
+    /** Removes the key and returns its value (null if it was not there). */
+    public V remove(K key) {
+        int i = indexFor(key, buckets.length);
+        if (buckets[i] == null) return null;
+        for (Entry<K, V> e : buckets[i]) {
+            if (e.key.equals(key)) {
+                buckets[i].remove(e);
+                size--;
+                return e.value;
+            }
+        }
+        return null;
+    }
+
     public boolean containsKey(K key) { return get(key) != null; }
 
     public MyLinkedList<K> keys() {

@@ -74,7 +74,7 @@ public class MatchingEngine {
     public int jobCount() { return allJobs.size(); }
 
     private MatchResult result(MatchProfile p, Job job, int distance) {
-        return new MatchResult(job, ScoreCalculator.breakdown(p.programCode, p.targetRole, p.hardSkills, job), distance);
+        return new MatchResult(job, ScoreCalculator.breakdown(p.programCodes, p.targetRole, p.hardSkills, job), distance);
     }
 
     private static MatchResult[] toArray(MyLinkedList<MatchResult> list) {
@@ -88,8 +88,10 @@ public class MatchingEngine {
     /** Jobs for the user's own program or target role, best score first (max-heap, top K). */
     public MatchResult[] recommend(MatchProfile p, int k) {
         MyHashTable<String, Job> candidates = new MyHashTable<>();
-        MyLinkedList<Job> sameProgram = byProgram.get(p.programCode);
-        if (sameProgram != null) for (Job j : sameProgram) candidates.put(j.id, j);
+        for (String code : p.programCodes) {
+            MyLinkedList<Job> sameProgram = byProgram.get(code);
+            if (sameProgram != null) for (Job j : sameProgram) candidates.put(j.id, j);
+        }
         MyLinkedList<Job> sameRole = byRole.get(Text.norm(p.targetRole));
         if (sameRole != null) for (Job j : sameRole) candidates.put(j.id, j);
 

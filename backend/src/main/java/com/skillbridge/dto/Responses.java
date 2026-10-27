@@ -6,7 +6,8 @@ import java.util.Map;
 public final class Responses {
     private Responses() {}
 
-    public record HealthDto(String status, int programs, int jobs, int users) {}
+    /** database = "connected" (data is saved) or "memory-only" (data is lost on restart). */
+    public record HealthDto(String status, int programs, int jobs, int users, String database) {}
 
     public record ProgramDto(String code, String group, String program, String major, String label,
                              String level, String status) {}
@@ -14,7 +15,7 @@ public final class Responses {
     /** One node of the College -> Program -> Major tree. code is null for nodes that are not selectable. */
     public record TreeDto(String name, String code, TreeDto[] children) {}
 
-    public record UserDto(int id, String fullName, int age, String email, String contact, String address,
+    public record UserDto(int id, String fullName, int age, String email,
                           String gender, String programCode, String programLabel, String group, String gradYear,
                           String targetRole, String[] hardSkills, String[] softSkills, String[] languages) {}
 

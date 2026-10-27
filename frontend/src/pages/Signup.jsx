@@ -4,7 +4,7 @@ import ProgramPicker from "../components/ProgramPicker";
 import TagInput from "../components/TagInput";
 
 const EMPTY = {
-  fullName: "", age: "", email: "", password: "", contact: "", address: "", gender: "",
+  fullName: "", age: "", email: "", password: "", gender: "",
   programCode: "", gradYear: "", targetRole: "", hardSkills: [], softSkills: [], languages: [],
 };
 
@@ -83,9 +83,7 @@ export default function Signup({ onDone, onBack }) {
             </div>
             <Row label="Email address"><input className="field" type="email" value={f.email} onChange={set("email")} /></Row>
             <Row label="Password (8+ characters)"><input className="field" type="password" value={f.password} onChange={set("password")} /></Row>
-            <Row label="Contact number"><input className="field" value={f.contact} onChange={set("contact")} /></Row>
-            <Row label="Home address"><input className="field" value={f.address} onChange={set("address")} /></Row>
-            <p className="text-xs text-slate-500">Gender, age and address are never used to rank jobs.</p>
+            <p className="text-xs text-slate-500">Your gender and age are never used to rank jobs.</p>
           </div>
           <div className="mt-5 flex justify-between">
             <button onClick={onBack} className="btn-ghost border border-slate-300">Back to login</button>
@@ -127,7 +125,7 @@ export default function Signup({ onDone, onBack }) {
       {step === 3 && (
         <Card step={step} error={error} title="Are you sure that all of the details are correct?">
           <dl className="grid grid-cols-3 gap-x-3 gap-y-1 text-sm">
-            {[["Name", f.fullName], ["Age", f.age], ["Email", f.email], ["Contact", f.contact || "—"], ["Address", f.address || "—"],
+            {[["Name", f.fullName], ["Age", f.age], ["Email", f.email],
               ["Gender", f.gender ? f.gender.toLowerCase() : "not stated"], ["Program code", f.programCode], ["Graduation", f.gradYear || "—"],
               ["Target role", f.targetRole || "—"], ["Hard skills", f.hardSkills.join(", ") || "—"],
               ["Soft skills", f.softSkills.join(", ") || "—"], ["Languages", f.languages.join(", ") || "—"]].map(([k, v]) => (

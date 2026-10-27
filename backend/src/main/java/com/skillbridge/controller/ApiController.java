@@ -62,6 +62,13 @@ public class ApiController {
         return service.updateProfile(service.userIdFromToken(auth), req);
     }
 
+    /** Permanently deletes the logged-in user's account and data (the password is asked again). */
+    @PostMapping("/me/delete")
+    public void deleteMe(@RequestHeader(value = "Authorization", required = false) String auth,
+                         @RequestBody DeleteAccountRequest req) {
+        service.deleteAccount(service.userIdFromToken(auth), req);
+    }
+
     // ---- home feed and jobs
     @GetMapping("/me/home")
     public HomeDto home(@RequestHeader(value = "Authorization", required = false) String auth,

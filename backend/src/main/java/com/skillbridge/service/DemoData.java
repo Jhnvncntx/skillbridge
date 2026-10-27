@@ -3,6 +3,7 @@ package com.skillbridge.service;
 /**
  * Demo accounts so the app can be shown right after a restart (accounts are kept in memory only).
  * Password for all: Demo1234.  Turn off with the environment variable SEED_DEMO=false.
+ * With a database they are created once and then kept (existing accounts are skipped).
  */
 final class DemoData {
     private DemoData() {}

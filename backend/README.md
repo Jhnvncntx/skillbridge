@@ -1,77 +1,93 @@
-# SkillBridge Backend v2 (Java + Spring Boot, custom data structures)
+# SkillBridge Backend v3 (Java + Spring Boot, custom data structures, PostgreSQL storage)
 
-## Run locally
-IntelliJ: open the `backend` folder, then run `SkillBridgeApplication` (green arrow).
-Terminal: `mvn spring-boot:run`. The server starts on http://localhost:8080.
-Check: http://localhost:8080/api/health  ->  {"status":"ok","programs":68,"jobs":16,"users":3}
-
-## Demo accounts (password for all: Demo1234)
-| Email | Program | Target role |
+## What is stored where
+| Data | Where | Survives a restart? |
 |---|---|---|
-| cpe@demo.skillbridge | Computer Engineering (CPE) | Embedded Systems Engineer |
-| cs@demo.skillbridge | CS - Software Development (CS-SD) | Backend Developer |
-| nurse@demo.skillbridge | Nursing (BSN) | Staff Nurse |
-Accounts live in memory and are re-created on every start. Disable them with env var SEED_DEMO=false.
+| Job listings | `src/main/resources/data/jobs.csv` (in GitHub) | Yes (it is part of the code) |
+| Accounts, profiles, saved jobs, applications | PostgreSQL (Neon) when `DATABASE_URL` is set | **Yes** |
+| Login sessions | Server memory | No. A restart means logging in again (accounts are safe). |
 
-## Data files (src/main/resources/data)
-| File | What it is |
-|---|---|
-| programs.csv | The 68 programs/majors (code, group, program, major, level, status, note) |
-| program_keywords.csv | The leader's 6 job-role + 4 skill keywords per program (used for the target-role dropdown) |
-| jobs.csv | The job listings. **Currently 16 SAMPLE rows (example.com links).** Replace with the real data. |
+All matching still runs on our own data structures in memory. The database only stores data:
+at startup the server loads it into the hash tables, lists and undo stacks, and every change is saved to
+the database first, then applied in memory.
 
-### Updating the real jobs
-1. In the Excel template (Jobs sheet): File > Download > CSV.
-2. Replace `src/main/resources/data/jobs.csv` with that file (keep the same name).
-3. Restart the server (or `git push` so Render redeploys).
-4. Open the admin report to see any rows that were skipped and why:
-   `curl -H "X-Admin-Passcode: admin123" localhost:8080/api/admin/stats`  ->  `dataReport.problems`
-   (Console output on startup also lists skipped rows.)
-Rows marked EXAMPLE and blank rows are ignored automatically.
+## Run locally (no database needed)
+IntelliJ: open `backend`, run `SkillBridgeApplication`. Or `mvn spring-boot:run`.
+Without `DATABASE_URL` it runs in **memory-only** mode (data is lost on restart), exactly like before.
+Check: http://localhost:8080/api/health  ->  `"database":"memory-only"` (or `"connected"` with a database).
 
 ## Environment variables
 | Variable | Default | Purpose |
 |---|---|---|
-| PORT | 8080 | Port (Render sets it) |
+| DATABASE_URL | (unset = memory-only) | PostgreSQL address, e.g. `postgresql://user:password@host/dbname?sslmode=require` |
+| SESSION_MINUTES | 10 | Log out after this many minutes of inactivity |
 | ADMIN_PASSCODE | admin123 | Admin dashboard passcode. CHANGE on Render. |
 | ALLOWED_ORIGIN | http://localhost:5173 | Front-end URL(s) allowed by CORS, comma-separated |
-| SEED_DEMO | true | Create the demo accounts |
+| SEED_DEMO | true | Create the 3 demo accounts (password Demo1234). With a database they are saved once. Set `false` for the real site. |
 | JOBS_CSV_PATH | (unset) | Read jobs from this file instead of the bundled jobs.csv |
+| PORT | 8080 | Port (Render sets it) |
+
+Never put the database address in GitHub or in chat. It belongs only in Render's Environment settings.
+
+## Setting up Neon (free PostgreSQL)
+1. Create a free account at neon.tech and a project. Choose the region closest to the Philippines (Singapore).
+2. In the Neon dashboard click **Connect** and copy the **connection string** (it starts with `postgresql://`).
+   Copy only the address: no `psql` word and no quotes.
+3. Render > your backend service > **Environment** > add `DATABASE_URL` = that string. Optionally add `SEED_DEMO` = `false`.
+4. Save. Render redeploys. Open `https://YOUR-BACKEND.onrender.com/api/health` and look for `"database":"connected"`.
+5. Test: register an account, save a job, apply, then **Manual Deploy > Restart** (or wait for the free server to sleep and wake).
+   Log in again: the account, saved jobs and applications should still be there.
+The tables are created automatically on the first start.
+
+If the server cannot reach the database at startup it stops with a clear error in the Render logs (it does not
+silently fall back to memory). To roll back, delete `DATABASE_URL`: the app returns to memory-only mode.
+
+## Database tables
+`users` (profile, hashed password), `saved_jobs` (user, job key), `applications` (user, job key, plus a copy of the job title,
+company and link so history still shows if a posting is removed from jobs.csv). Deleting a user also deletes their saved jobs and applications.
+
+## Job ids
+A job's id is built from its link, not its row number: `jobstreet-95263012`, `indeed-8dd834be09a07811`, or `link-<hash>`.
+Tracking parameters in the link are ignored. Editing or reordering `jobs.csv` therefore never breaks anyone's saved jobs or applications.
+
+## Updating the real jobs
+1. Export the Jobs sheet as CSV and name it `jobs.csv`.
+2. Replace `src/main/resources/data/jobs.csv` and push. Render redeploys.
+3. Check the admin report: `curl -H "X-Admin-Passcode: ..." https://YOUR-BACKEND.onrender.com/api/admin/stats` -> `dataReport.problems`.
+
+## Demo accounts (password: Demo1234)
+cpe@demo.skillbridge (Computer Engineering), cs@demo.skillbridge (CS - Software Development), nurse@demo.skillbridge (Nursing).
 
 ## API
-Log in first; send the token as `Authorization: Bearer <token>`.
+Log in first; send the token as `Authorization: Bearer <token>`. Any request counts as activity; after SESSION_MINUTES without one
+the session ends (401 "You were logged out due to inactivity.").
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | /api/health | status and counts |
-| GET | /api/programs | flat program list (tree order) |
-| GET | /api/programs/tree | College > Program > Major tree |
-| GET | /api/programs/{code}/roles | suggested target roles |
-| GET | /api/programs/{code}/skills | suggested hard skills |
+| GET | /api/health | status, counts, database (connected / memory-only) |
+| GET | /api/programs, /api/programs/tree | program list / College > Program > Major tree |
+| GET | /api/programs/{code}/roles, /skills | suggested target roles / skills |
 | GET | /api/skills?prefix= | skill autocomplete |
-| POST | /api/auth/signup | create account (returns token + user) |
-| POST | /api/auth/login | log in (returns token + user) |
-| POST | /api/auth/logout | end the session |
+| POST | /api/auth/signup, /login, /logout | account and session |
 | GET / PUT | /api/me | view / edit profile |
+| POST | /api/me/delete | permanently delete my account (body: `{"password": "..."}`; 403 if wrong) |
 | GET | /api/me/home?top=6 | `recommended` + `alsoQualify` |
 | GET | /api/jobs?q= | all jobs ranked for me, or keyword search |
 | GET | /api/jobs/{id} | one job with score breakdown |
-| GET | /api/me/saved | saved jobs |
-| POST / DELETE | /api/me/saved/{jobId} | save / unsave |
-| POST | /api/me/applications | apply (body: jobId, note); response has the job `link` to open |
-| GET | /api/me/applications | my applications |
+| GET / POST / DELETE | /api/me/saved[/{jobId}] | saved jobs |
+| POST / GET | /api/me/applications | apply (returns the job link) / list |
 | DELETE | /api/me/applications/last | undo last application |
-| GET | /api/admin/stats | header `X-Admin-Passcode`; per-program stats, coverage gaps, data report |
+| GET | /api/admin/stats | header `X-Admin-Passcode` |
 
-Errors: `{"error": "message"}` with 400 / 401 / 404 / 409.
+Errors: `{"error": "message"}` with 400 / 401 / 403 / 404 / 409 / 503 (database temporarily unavailable).
 
 ## Scoring (engine/ScoreCalculator.java)
-Role match 50 + hard skills 30 x (matched / required) + program match 20 = 100.
-The matching engine only receives a `MatchProfile` (program code, target role, hard skills).
-Gender, age, address and contact never reach it.
+Role match 50 + hard skills 30 x (matched / required) + program match 20 = 100. A student in a major (for example CS-SD)
+also matches jobs tagged with the base program (CS). The engine only receives a `MatchProfile` (program codes, target role,
+hard skills). Gender and age never reach it.
 
-## Where to read the data structures (suggested order)
-1. datastructures/MyLinkedList, MyStack, MyQueue (linear)
-2. MyHashTable (chaining + resize), SearchUtil, SortUtil (merge sort)
-3. MyMaxHeap, MyTree (preorder with a stack, level order with a queue), MyGraph (BFS with a queue)
-4. engine/MatchingEngine (how they are combined), engine/ScoreCalculator
+## Where to read the code
+1. datastructures/ (MyLinkedList, MyStack, MyQueue, MyHashTable, MyMaxHeap, MyTree, MyGraph, SortUtil, SearchUtil)
+2. engine/MatchingEngine, ScoreCalculator
+3. persistence/ (Persistence interface, MemoryPersistence, PostgresPersistence)
+4. service/SkillBridgeService (all business logic)

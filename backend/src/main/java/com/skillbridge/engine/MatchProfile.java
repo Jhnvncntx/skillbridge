@@ -9,10 +9,11 @@ import com.skillbridge.datastructures.MyLinkedList;
  * so the engine cannot use them (gender-inclusive by design).
  */
 public class MatchProfile {
-    public final String programCode, targetRole;
+    public final String[] programCodes;      // the student's program, plus its base program when it is a major
+    public final String targetRole;
     public final MyLinkedList<String> hardSkills;
 
-    public MatchProfile(String programCode, String targetRole, MyLinkedList<String> hardSkills) {
-        this.programCode = programCode; this.targetRole = targetRole; this.hardSkills = hardSkills;
+    public MatchProfile(String[] programCodes, String targetRole, MyLinkedList<String> hardSkills) {
+        this.programCodes = programCodes; this.targetRole = targetRole; this.hardSkills = hardSkills;
     }
 }

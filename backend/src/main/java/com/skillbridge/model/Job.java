@@ -14,6 +14,12 @@ public class Job {
         this.dateCollected = dateCollected; this.programCodes = programCodes; this.requiredSkills = requiredSkills;
     }
 
+    /** True if the job targets any of the given program codes (a student's program plus its base program). */
+    public boolean targetsAny(String[] codes) {
+        for (String c : codes) if (targets(c)) return true;
+        return false;
+    }
+
     public boolean targets(String programCode) {
         for (String c : programCodes) if (c.equals(programCode)) return true;
         return false;
