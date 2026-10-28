@@ -430,6 +430,28 @@ public class SkillBridgeService {
         return toDto(app);
     }
 
+    /**
+     * Removes ONE application from the user's own list (any of them, not only the newest).
+     * This only changes the list in SkillBridge; it cannot withdraw anything sent on the job site.
+     * The undo stack is rebuilt from the remaining applications, so "Undo last" always removes the newest one left.
+     */
+    public synchronized ApplicationDto removeApplication(int userId, int applicationId) {
+        requireUser(userId);
+        Application target = null;
+        for (Application a : applications) if (a.id == applicationId && a.userId == userId) target = a;   // only the owner's own
+        if (target == null) throw ApiException.notFound("Application not found.");
+        db.deleteApplication(applicationId);          // storage first
+        applications.remove(target);
+        rebuildUndoStack(userId);
+        return toDto(target);
+    }
+
+    private void rebuildUndoStack(int userId) {
+        MyStack<Application> fresh = new MyStack<>();
+        for (Application a : applications) if (a.userId == userId) fresh.push(a);   // oldest first, so the newest ends on top
+        undoStacks.put(String.valueOf(userId), fresh);
+    }
+
     private boolean hasApplied(int userId, String jobId) {
         for (Application a : applications) if (a.userId == userId && a.jobId.equals(jobId)) return true;
         return false;

@@ -19,10 +19,10 @@ export default function Login({ onDone, onSignup, onAdmin, notice }) {
   };
 
   return (
-    <div className="mx-auto grid max-w-5xl items-center gap-8 px-4 py-10 md:grid-cols-2">
+    <div className="mx-auto grid max-w-5xl items-center gap-8 px-4 py-6 md:grid-cols-2 md:py-10">
       <div>
-        <h1 className="text-5xl font-extrabold tracking-tight text-gold">SKILLBRIDGE</h1>
-        <form onSubmit={submit} className="mt-6 space-y-3 rounded-3xl bg-white p-6 shadow-xl">
+        <h1 className="text-4xl font-extrabold tracking-tight text-gold md:text-5xl">SKILLBRIDGE</h1>
+        <form onSubmit={submit} className="mt-6 space-y-3 rounded-3xl bg-white p-5 shadow-xl sm:p-6">
           {notice && <p className="rounded bg-amber-100 p-2 text-sm text-amber-800">{notice}</p>}
           <div>
             <label className="text-sm font-bold tracking-wide">EMAIL</label>

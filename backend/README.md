@@ -77,6 +77,7 @@ the session ends (401 "You were logged out due to inactivity.").
 | GET / POST / DELETE | /api/me/saved[/{jobId}] | saved jobs |
 | POST / GET | /api/me/applications | apply (returns the job link) / list |
 | DELETE | /api/me/applications/last | undo last application |
+| DELETE | /api/me/applications/{id} | remove one application from my list (numeric id; only your own; 404 otherwise). Does not withdraw anything on the job site. |
 | GET | /api/admin/stats | header `X-Admin-Passcode` |
 
 Errors: `{"error": "message"}` with 400 / 401 / 403 / 404 / 409 / 503 (database temporarily unavailable).

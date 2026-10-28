@@ -44,6 +44,7 @@ export const api = {
   unsave: (id) => call(`/api/me/saved/${id}`, "DELETE"),
   apply: (jobId, note = "") => call("/api/me/applications", "POST", { jobId, note }),
   applications: () => call("/api/me/applications"),
+  removeApplication: (id) => call(`/api/me/applications/${id}`, "DELETE"),
   undoLast: () => call("/api/me/applications/last", "DELETE"),
   deleteAccount: (password) => call("/api/me/delete", "POST", { password }),
   adminStats: (passcode) => call("/api/admin/stats", "GET", undefined, { "X-Admin-Passcode": passcode }),

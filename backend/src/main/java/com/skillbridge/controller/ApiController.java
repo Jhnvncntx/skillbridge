@@ -119,6 +119,13 @@ public class ApiController {
         return service.applications(service.userIdFromToken(auth));
     }
 
+    /** Removes one application from my list. The id must be a number, so it never clashes with ".../last". */
+    @DeleteMapping("/me/applications/{id:\\d+}")
+    public ApplicationDto removeApplication(@RequestHeader(value = "Authorization", required = false) String auth,
+                                            @PathVariable("id") int id) {
+        return service.removeApplication(service.userIdFromToken(auth), id);
+    }
+
     @DeleteMapping("/me/applications/last")
     public ApplicationDto undoLast(@RequestHeader(value = "Authorization", required = false) String auth) {
         return service.undoLastApplication(service.userIdFromToken(auth));

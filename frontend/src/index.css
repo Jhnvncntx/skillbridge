@@ -10,10 +10,19 @@
   --color-gold: #ffe27a;
 }
 
+html { background-color: #4a0610; }
 body {
   min-height: 100vh;
-  background: linear-gradient(135deg, #2a0309 0%, #5a1118 60%, #6b1a20 100%) fixed;
+  min-height: 100dvh;      /* the visible height on phones (the address bar comes and goes) */
   color: #1e293b;
+}
+/* The gradient lives on its own fixed layer: "background-attachment: fixed" is unreliable on phones. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, #2a0309 0%, #5a1118 60%, #6b1a20 100%);
 }
 
 .field {
