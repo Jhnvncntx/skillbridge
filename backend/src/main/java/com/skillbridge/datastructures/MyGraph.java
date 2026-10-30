@@ -57,7 +57,7 @@ public class MyGraph {
         }
         while (!queue.isEmpty()) {
             Node n = queue.dequeue();
-            if (n.depth >= maxDepth) continue;                    // do not expand further
+            if (n.depth >= maxDepth) continue;
             if (n.isSkill) {
                 for (String jobId : jobsRequiring(n.key)) {
                     if (seenJobs.get(jobId) != null) continue;

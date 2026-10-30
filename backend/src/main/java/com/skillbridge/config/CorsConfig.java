@@ -4,11 +4,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * Lets the React front end call this API from another origin.
- * ALLOWED_ORIGIN = comma-separated list (e.g. your Render static-site URL).
- * Defaults to the Vite dev server for local development.
- */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
     @Override

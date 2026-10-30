@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* SkillBridge theme (maroon / gold from the Canva concept) */
 @theme {
   --color-maroon-950: #2a0309;
   --color-maroon-900: #4a0610;
@@ -10,13 +9,14 @@
   --color-gold: #ffe27a;
 }
 
-html { background-color: #4a0610; }
+html {
+  background-color: #4a0610;
+}
 body {
   min-height: 100vh;
-  min-height: 100dvh;      /* the visible height on phones (the address bar comes and goes) */
+  min-height: 100dvh;
   color: #1e293b;
 }
-/* The gradient lives on its own fixed layer: "background-attachment: fixed" is unreliable on phones. */
 body::before {
   content: "";
   position: fixed;
@@ -39,7 +39,9 @@ body::before {
   font-weight: 700;
   color: white;
 }
-.btn-primary:disabled { opacity: 0.5; }
+.btn-primary:disabled {
+  opacity: 0.5;
+}
 .btn-ghost {
   border-radius: 0.5rem;
   background: white;
@@ -47,4 +49,9 @@ body::before {
   font-weight: 600;
   color: #4a0610;
 }
-.clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
